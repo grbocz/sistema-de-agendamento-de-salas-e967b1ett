@@ -26,10 +26,12 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 
 import useAppStore from '@/stores/useAppStore'
+import { useAuth } from '@/hooks/use-auth'
 import { generateTimeOptions } from '@/lib/date-utils'
 
 const bookingSchema = z.object({
   roomId: z.string().min(1, 'Selecione uma sala'),
+  userName: z.string().min(2, 'Informe o solicitante'),
   startTime: z.string().min(1, 'Selecione o horário inicial'),
   duration: z.string().min(1, 'Selecione a duração'),
 })
@@ -42,7 +44,8 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) {
-  const { rooms, addReservation, user } = useAppStore()
+  const { rooms, addReservation } = useAppStore()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
 
@@ -50,8 +53,19 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
-    defaultValues: { roomId: activeRoomId, startTime: '09:00', duration: '60' },
+    defaultValues: {
+      roomId: activeRoomId,
+      userName: user?.name || '',
+      startTime: '09:00',
+      duration: '60',
+    },
   })
+
+  useEffect(() => {
+    if (user?.name && !form.getValues('userName')) {
+      form.setValue('userName', user.name)
+    }
+  }, [user, form])
 
   useEffect(() => {
     if (activeRoomId) {
@@ -68,7 +82,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       startTime: data.startTime,
       duration: parseInt(data.duration, 10),
       userId: user.email,
-      userName: user.name,
+      userName: data.userName,
     })
 
     if (resResult.success) {
@@ -127,17 +141,19 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
                   )
                 }}
               />
-              <FormItem>
-                <FormLabel>Solicitante</FormLabel>
-                <FormControl>
-                  <Input
-                    value={user?.name || ''}
-                    readOnly
-                    className="bg-muted cursor-not-allowed text-muted-foreground"
-                    tabIndex={-1}
-                  />
-                </FormControl>
-              </FormItem>
+              <FormField
+                control={form.control}
+                name="userName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Solicitante</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do solicitante" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               {' '}

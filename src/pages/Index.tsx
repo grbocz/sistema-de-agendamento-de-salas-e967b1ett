@@ -71,10 +71,13 @@ export default function Index() {
   const onGuestSubmit = async (data: GuestForm) => {
     setIsSubmitting(true)
     const normalized = data.name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]/g, '')
-    const email = `${normalized}@guest.ethimos.com`
+    const safePrefix = normalized.length > 0 ? normalized : 'guest'
+    const email = `${safePrefix}@guest.ethimos.com`
     const password = `EthimosGuest123!`
 
     // Try to login first (if user already exists)
