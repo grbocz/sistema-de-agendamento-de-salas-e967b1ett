@@ -1,55 +1,52 @@
-import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { corsHeaders } from '../_shared/cors.ts'
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
-
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: req.headers.get('Authorization')! } },
-    })
+    });
 
-    const { room_id, date, start_time, duration_minutes } = await req.json()
+    const { room_id, date, start_time, duration_minutes } = await req.json();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) throw new Error('Unauthorized')
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Unauthorized');
 
     const { data: existingReservations, error: fetchError } = await supabase
       .from('reservations')
       .select('*')
       .eq('room_id', room_id)
-      .eq('date', date)
+      .eq('date', date);
 
-    if (fetchError) throw fetchError
+    if (fetchError) throw fetchError;
 
     const parseTime = (timeStr: string) => {
-      const [h, m] = timeStr.split(':').map(Number)
-      return h * 60 + m
-    }
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
 
-    const newStart = parseTime(start_time)
-    const newEnd = newStart + parseInt(duration_minutes, 10)
+    const newStart = parseTime(start_time);
+    const newEnd = newStart + parseInt(duration_minutes, 10);
 
     const hasConflict = existingReservations?.some((res: any) => {
-      const exStart = parseTime(res.start_time)
-      const exEnd = exStart + res.duration_minutes
-      return newStart < exEnd && exStart < newEnd
-    })
+      const exStart = parseTime(res.start_time);
+      const exEnd = exStart + res.duration_minutes;
+      return newStart < exEnd && exStart < newEnd;
+    });
 
     if (hasConflict) {
       return new Response(JSON.stringify({ error: 'Horário já ocupado' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      });
     }
 
     const { data: inserted, error: insertError } = await supabase
@@ -62,17 +59,17 @@ Deno.serve(async (req: Request) => {
         duration_minutes: parseInt(duration_minutes, 10),
       })
       .select('*, profiles(name)')
-      .single()
+      .single();
 
-    if (insertError) throw insertError
+    if (insertError) throw insertError;
 
     return new Response(JSON.stringify({ success: true, data: inserted }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    });
   }
-})
+});
