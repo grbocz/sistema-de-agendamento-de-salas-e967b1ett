@@ -10,29 +10,45 @@ interface TimelineProps {
   date: Date
   reservations: Reservation[]
   rooms: Room[]
+  selectedRoomId?: string | null
 }
 
 const START_HOUR = 7
 const END_HOUR = 21
 const PIXELS_PER_HOUR = 60
 
-export function Timeline({ date, reservations, rooms }: TimelineProps) {
+export function Timeline({ date, reservations, rooms, selectedRoomId }: TimelineProps) {
   const dateStr = format(date, 'yyyy-MM-dd')
 
-  const todaysReservations = useMemo(
-    () => reservations.filter((r) => r.date === dateStr),
-    [reservations, dateStr],
+  const todaysReservations = useMemo(() => {
+    let filtered = reservations.filter((r) => r.date === dateStr)
+    if (selectedRoomId) {
+      filtered = filtered.filter((r) => r.roomId === selectedRoomId)
+    }
+    return filtered
+  }, [reservations, dateStr, selectedRoomId])
+
+  const selectedRoom = useMemo(
+    () => rooms.find((r) => r.id === selectedRoomId),
+    [rooms, selectedRoomId],
   )
 
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR)
 
   return (
     <Card className="h-full flex flex-col shadow-subtle">
-      <CardHeader className="py-4 px-6 border-b bg-muted/20">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
-          Agenda: {format(date, "dd 'de' MMMM, yyyy", { locale: ptBR })}
-        </CardTitle>
+      <CardHeader className="py-4 px-6 border-b bg-muted/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Agenda: {format(date, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+          </CardTitle>
+        </div>
+        {selectedRoom && (
+          <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full font-bold text-sm border border-primary/20 shadow-sm animate-fade-in text-center truncate max-w-full">
+            {selectedRoom.name}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 p-0 overflow-hidden relative">
         <div className="h-[600px] overflow-y-auto relative bg-slate-50/50">

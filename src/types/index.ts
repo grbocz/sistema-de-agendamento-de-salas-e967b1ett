@@ -13,6 +13,7 @@ export interface Room {
   capacity: number
   description: string
   color: string
+  imageUrl?: string
 }
 
 export interface Reservation {

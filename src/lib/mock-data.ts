@@ -8,12 +8,26 @@ const CHART_COLORS = [
   'hsl(var(--chart-5))',
 ]
 
+const IMAGE_QUERIES = [
+  'modern meeting room',
+  'boardroom',
+  'conference room',
+  'office workspace',
+  'huddle room',
+  'executive office',
+  'training room',
+  'minimalist office',
+  'coworking space',
+  'presentation room',
+]
+
 export const MOCK_ROOMS: Room[] = Array.from({ length: 10 }, (_, i) => ({
   id: `room-${i + 1}`,
   name: `Sala ${String(i + 1).padStart(2, '0')}`,
   capacity: [10, 15, 20, 30, 50][i % 5],
   description: `Sala de reunião equipada com TV, ar-condicionado e quadro branco.`,
   color: CHART_COLORS[i % 5],
+  imageUrl: `https://img.usecurling.com/p/250/250?q=${encodeURIComponent(IMAGE_QUERIES[i])}&dpr=2`,
 }))
 
 const today = new Date()
