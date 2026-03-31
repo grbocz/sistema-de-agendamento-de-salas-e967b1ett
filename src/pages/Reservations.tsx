@@ -70,7 +70,7 @@ export default function Reservations() {
 
     if (filterUser) {
       result = result.filter((r) => {
-        const name = (r as any).user_name || r.userName || ''
+        const name = (r as any).realUserName || (r as any).user_name || r.userName || ''
         return name.toLowerCase().includes(filterUser.toLowerCase())
       })
     }
@@ -81,7 +81,7 @@ export default function Reservations() {
       if (dateCompare !== 0) return dateCompare
       return a.startTime.localeCompare(b.startTime)
     })
-  }, [reservations, filterRoom, filterDate])
+  }, [reservations, filterRoom, filterDate, filterUser])
 
   const handleDelete = (id: string) => {
     deleteReservation(id)
@@ -95,7 +95,11 @@ export default function Reservations() {
   useEffect(() => {
     if (editingRes) {
       form.reset({
-        userName: (editingRes as any).user_name || editingRes.userName || '',
+        userName:
+          (editingRes as any).realUserName ||
+          (editingRes as any).user_name ||
+          editingRes.userName ||
+          '',
         date: editingRes.date,
         startTime: editingRes.startTime,
         duration: editingRes.duration.toString(),
