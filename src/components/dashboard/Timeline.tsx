@@ -1,0 +1,90 @@
+import { useMemo } from 'react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Clock } from 'lucide-react'
+import { Reservation, Room } from '@/types'
+import { timeToMins, minsToTime } from '@/lib/date-utils'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+interface TimelineProps {
+  date: Date
+  reservations: Reservation[]
+  rooms: Room[]
+}
+
+const START_HOUR = 7
+const END_HOUR = 21
+const PIXELS_PER_HOUR = 60
+
+export function Timeline({ date, reservations, rooms }: TimelineProps) {
+  const dateStr = format(date, 'yyyy-MM-dd')
+
+  const todaysReservations = useMemo(
+    () => reservations.filter((r) => r.date === dateStr),
+    [reservations, dateStr],
+  )
+
+  const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => i + START_HOUR)
+
+  return (
+    <Card className="h-full flex flex-col shadow-subtle">
+      <CardHeader className="py-4 px-6 border-b bg-muted/20">
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          Agenda: {format(date, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 p-0 overflow-hidden relative">
+        <div className="h-[600px] overflow-y-auto relative bg-slate-50/50">
+          {/* Background Grid */}
+          {hours.map((h) => (
+            <div key={h} className="flex h-[60px] border-b border-border/50">
+              <div className="w-16 text-xs text-muted-foreground p-2 border-r border-border/50 text-right bg-white select-none">
+                {h.toString().padStart(2, '0')}:00
+              </div>
+              <div className="flex-1 bg-white" />
+            </div>
+          ))}
+
+          {/* Events Overlay */}
+          <div className="absolute top-0 left-16 right-0 bottom-0 pointer-events-none p-1">
+            {todaysReservations.map((res) => {
+              const startMins = timeToMins(res.startTime)
+              const top = (startMins - START_HOUR * 60) * (PIXELS_PER_HOUR / 60)
+              const height = res.duration * (PIXELS_PER_HOUR / 60)
+              const room = rooms.find((r) => r.id === res.roomId)
+              const endTime = minsToTime(startMins + res.duration)
+
+              return (
+                <div
+                  key={res.id}
+                  className="absolute left-2 right-2 rounded-md border px-3 py-1.5 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group"
+                  style={{
+                    top: `${top}px`,
+                    height: `${height}px`,
+                    backgroundColor: room?.color || 'hsl(var(--primary))',
+                    borderColor: 'rgba(255,255,255,0.2)',
+                  }}
+                >
+                  <div className="font-bold flex justify-between items-center opacity-90 group-hover:opacity-100">
+                    <span>
+                      {res.startTime} - {endTime}
+                    </span>
+                    <span className="truncate max-w-[50%] text-right">{room?.name}</span>
+                  </div>
+                  <div className="mt-1 font-medium truncate opacity-90">{res.userName}</div>
+                </div>
+              )
+            })}
+
+            {todaysReservations.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-medium">
+                Nenhuma reserva para este dia.
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
