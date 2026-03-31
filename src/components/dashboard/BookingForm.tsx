@@ -52,7 +52,9 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
 
   const activeRoomId = selectedRoomId || searchParams.get('roomId') || ''
 
-  const defaultUserName = user?.name === 'Acesso Padrão' ? '' : user?.name || ''
+  const isGenericName =
+    user?.name === 'Acesso Padrão' || user?.name === 'Usuário' || user?.name === 'generico'
+  const defaultUserName = isGenericName ? '' : user?.name || ''
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
