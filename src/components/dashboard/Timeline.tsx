@@ -88,7 +88,9 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
                     </span>
                     <span className="truncate max-w-[50%] text-right">{room?.name}</span>
                   </div>
-                  <div className="mt-1 font-medium truncate opacity-90">{res.userName}</div>
+                  <div className="mt-1 font-medium truncate opacity-90">
+                    {(res as any).realUserName || (res as any).user_name || res.userName}
+                  </div>
                 </div>
               )
             })}

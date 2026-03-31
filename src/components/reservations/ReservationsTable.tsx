@@ -40,8 +40,7 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
             <TableHead>Data</TableHead>
             <TableHead>Horário</TableHead>
             <TableHead>Duração</TableHead>
-            <TableHead>Perfil</TableHead>
-            <TableHead>Solicitante Real</TableHead>
+            <TableHead>Solicitante</TableHead>
             {isMaster && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
         </TableHeader>
@@ -70,7 +69,6 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                     {res.duration} min
                   </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{res.userName}</TableCell>
                 <TableCell className="font-semibold text-primary">
                   {(res as any).realUserName || (res as any).user_name || res.userName}
                 </TableCell>
