@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast'
 
 import useAppStore from '@/stores/useAppStore'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 import { generateTimeOptions } from '@/lib/date-utils'
 
 const bookingSchema = z.object({
@@ -81,11 +82,22 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       date: format(selectedDate, 'yyyy-MM-dd'),
       startTime: data.startTime,
       duration: parseInt(data.duration, 10),
-      userId: user.email,
+      userId: user.id,
       userName: data.userName,
-    })
+      user_name: data.userName,
+    } as any)
 
     if (resResult.success) {
+      // Garante que o nome customizado seja salvo no banco
+      await supabase
+        .from('reservations')
+        .update({ user_name: data.userName })
+        .match({
+          room_id: data.roomId,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          start_time: data.startTime,
+        })
+
       toast({
         title: 'Reserva confirmada!',
         description: 'Sua sala foi agendada com sucesso.',
@@ -127,9 +139,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
                       <FormControl>
                         <Input
                           value={
-                            selectedRoom
-                              ? `${selectedRoom.name} (${selectedRoom.capacity} cap.)`
-                              : 'Selecione uma sala no carrossel'
+                            selectedRoom ? selectedRoom.name : 'Selecione uma sala no carrossel'
                           }
                           readOnly
                           className="bg-muted cursor-not-allowed text-muted-foreground"

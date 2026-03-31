@@ -15,7 +15,12 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: req.headers.get('Authorization')! } },
     })
 
-    const { room_id, date, start_time, duration_minutes } = await req.json()
+    const body = await req.json()
+    const room_id = body.room_id || body.roomId
+    const date = body.date
+    const start_time = body.start_time || body.startTime
+    const duration_minutes = body.duration_minutes || body.duration
+    const user_name = body.user_name || body.userName
 
     const {
       data: { user },
@@ -52,6 +57,8 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    const finalUserName = user_name || user.user_metadata?.name || 'Solicitante'
+
     const { data: inserted, error: insertError } = await supabase
       .from('reservations')
       .insert({
@@ -60,6 +67,7 @@ Deno.serve(async (req: Request) => {
         date,
         start_time,
         duration_minutes: parseInt(duration_minutes, 10),
+        user_name: finalUserName,
       })
       .select('*, profiles(name)')
       .single()

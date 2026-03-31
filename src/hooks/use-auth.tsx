@@ -33,15 +33,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', userId)
         .single()
         .then(({ data }) => {
+          const isGuest = email === 'guest@ethimos.com'
+          const guestName = localStorage.getItem('@ethimos:guestName')
+
           if (data) {
             setUser({
               id: data.id,
               email: data.email,
-              name: data.name,
+              name: isGuest && guestName ? guestName : data.name,
               role: data.role as UserRole,
             })
           } else {
-            setUser({ id: userId, email: email, name: email.split('@')[0], role: 'generico' })
+            setUser({
+              id: userId,
+              email: email,
+              name: isGuest && guestName ? guestName : email.split('@')[0],
+              role: 'generico',
+            })
           }
           setLoading(false)
         })

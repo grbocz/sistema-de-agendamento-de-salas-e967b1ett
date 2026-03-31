@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Edit2 } from 'lucide-react'
 
 import {
   Table,
@@ -18,10 +18,11 @@ interface Props {
   reservations: Reservation[]
   rooms: Room[]
   onDelete: (id: string) => void
+  onEdit: (reservation: Reservation) => void
   isMaster: boolean
 }
 
-export function ReservationsTable({ reservations, rooms, onDelete, isMaster }: Props) {
+export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMaster }: Props) {
   if (reservations.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg border border-dashed">
@@ -69,9 +70,19 @@ export function ReservationsTable({ reservations, rooms, onDelete, isMaster }: P
                   </Badge>
                 </TableCell>
                 {isMaster && (
-                  <TableCell className="text-muted-foreground">{res.userName}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {(res as any).user_name || res.userName}
+                  </TableCell>
                 )}
                 <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 mr-1"
+                    onClick={() => onEdit(res)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

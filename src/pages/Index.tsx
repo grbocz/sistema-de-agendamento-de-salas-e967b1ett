@@ -70,23 +70,17 @@ export default function Index() {
 
   const onGuestSubmit = async (data: GuestForm) => {
     setIsSubmitting(true)
-    const normalized = data.name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]/g, '')
-    const safePrefix = normalized.length > 0 ? normalized : 'guest'
-    const email = `${safePrefix}@guest.ethimos.com`
+
+    const email = `guest@ethimos.com`
     const password = `EthimosGuest123!`
 
-    // Try to login first (if user already exists)
+    localStorage.setItem('@ethimos:guestName', data.name)
+
     let { error } = await signIn(email, password)
 
     if (error) {
-      // If error (user likely doesn't exist), create account and sign in
-      const signupRes = await signUp(email, password, data.name)
-      if (signupRes.error) {
+      const signupRes = await signUp(email, password, 'Acesso Padrão')
+      if (signupRes.error && !signupRes.error.message.includes('already registered')) {
         toast({
           title: 'Erro ao acessar',
           description: signupRes.error.message,
