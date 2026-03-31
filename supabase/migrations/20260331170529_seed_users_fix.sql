@@ -17,7 +17,7 @@ WHERE
   OR reauthentication_token IS NULL;
 
 -- Garante que existam usuários válidos e configurados para uso do sistema
-DO $
+DO $$
 DECLARE
   new_user_id uuid;
 BEGIN
@@ -102,4 +102,4 @@ BEGIN
     VALUES (new_user_id, 'user@ethimos.com.br', 'Usuário Padrão', 'generico')
     ON CONFLICT (id) DO NOTHING;
   END IF;
-END $;
+END $$;
