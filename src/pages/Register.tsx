@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarDays, LogIn } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,15 +19,22 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
 
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-})
+const registerSchema = z
+  .object({
+    name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+    email: z.string().email('Email inválido'),
+    password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  })
 
-type LoginForm = z.infer<typeof loginSchema>
+type RegisterForm = z.infer<typeof registerSchema>
 
-export default function Index() {
-  const { user, loading, signIn } = useAuth()
+export default function Register() {
+  const { user, loading, signUp } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,9 +43,9 @@ export default function Index() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
   })
 
   useEffect(() => {
@@ -51,12 +58,15 @@ export default function Index() {
     }
   }, [user, loading, navigate])
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: RegisterForm) => {
     setIsSubmitting(true)
-    const { error } = await signIn(data.email, data.password)
+    const { error } = await signUp(data.email, data.password, data.name)
     setIsSubmitting(false)
     if (error) {
-      toast({ title: 'Erro ao fazer login', description: error.message, variant: 'destructive' })
+      toast({ title: 'Erro ao cadastrar', description: error.message, variant: 'destructive' })
+    } else {
+      toast({ title: 'Cadastro realizado', description: 'Você já pode fazer login no sistema.' })
+      navigate('/')
     }
   }
 
@@ -67,17 +77,23 @@ export default function Index() {
       <Card className="w-full max-w-md shadow-elevation border-0 ring-1 ring-border/50">
         <CardHeader className="space-y-2 text-center pb-8">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-            <CalendarDays className="h-6 w-6 text-primary" />
+            <UserPlus className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-xl font-bold tracking-tight leading-tight">
-            Reserva de Salas de Reunião - Ethimos Investimentos
-          </CardTitle>
-          <CardDescription>
-            Entre com suas credenciais de acesso para agendar salas.
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight">Criar Conta</CardTitle>
+          <CardDescription>Preencha os dados abaixo para se cadastrar.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome completo</Label>
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                {...register('name')}
+                className={errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
+              />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -89,12 +105,7 @@ export default function Index() {
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <Link to="/esqueci-senha" className="text-sm text-primary hover:underline">
-                  Esqueci minha senha
-                </Link>
-              </div>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -107,15 +118,29 @@ export default function Index() {
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                {...register('confirmPassword')}
+                className={
+                  errors.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''
+                }
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              )}
+            </div>
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full text-md h-11" size="lg" disabled={isSubmitting}>
-              <LogIn className="mr-2 h-4 w-4" /> Entrar
+              Cadastrar
             </Button>
             <div className="text-center text-sm">
-              Não tem uma conta?{' '}
-              <Link to="/cadastro" className="text-primary hover:underline font-medium">
-                Cadastrar novo usuário
+              Já tem uma conta?{' '}
+              <Link to="/" className="text-primary hover:underline font-medium">
+                Fazer login
               </Link>
             </div>
           </CardFooter>

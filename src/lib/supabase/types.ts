@@ -9,7 +9,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          created_at: string
+          date: string
+          duration_minutes: number
+          id: string
+          room_id: string
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          duration_minutes: number
+          id?: string
+          room_id: string
+          start_time: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          duration_minutes?: number
+          id?: string
+          room_id?: string
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reservations_room_id_fkey'
+            columns: ['room_id']
+            isOneToOne: false
+            referencedRelation: 'rooms'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'reservations_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          capacity: number
+          color: string
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          capacity?: number
+          color?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          capacity?: number
+          color?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -153,3 +251,78 @@ export const Constants = {
 // IMPORTANT: The TypeScript types above map UUID, TEXT, VARCHAR all to "string".
 // Use the COLUMN TYPES section below to know the real PostgreSQL type for each column.
 // Always use the correct PostgreSQL type when writing SQL migrations.
+
+// --- COLUMN TYPES (actual PostgreSQL types) ---
+// Use this to know the real database type when writing migrations.
+// "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: profiles
+//   id: uuid (not null)
+//   email: text (not null)
+//   name: text (not null)
+//   role: text (not null, default: 'generico'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: reservations
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   room_id: uuid (not null)
+//   date: date (not null)
+//   start_time: time without time zone (not null)
+//   duration_minutes: integer (not null)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: rooms
+//   id: uuid (not null, default: gen_random_uuid())
+//   name: text (not null)
+//   capacity: integer (not null, default: 10)
+//   description: text (not null, default: ''::text)
+//   color: text (not null, default: '#000000'::text)
+//   image_url: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+
+// --- CONSTRAINTS ---
+// Table: profiles
+//   FOREIGN KEY profiles_id_fkey: FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+//   PRIMARY KEY profiles_pkey: PRIMARY KEY (id)
+//   CHECK profiles_role_check: CHECK ((role = ANY (ARRAY['generico'::text, 'master'::text])))
+// Table: reservations
+//   PRIMARY KEY reservations_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY reservations_room_id_fkey: FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+//   FOREIGN KEY reservations_user_id_fkey: FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+// Table: rooms
+//   PRIMARY KEY rooms_pkey: PRIMARY KEY (id)
+
+// --- ROW LEVEL SECURITY POLICIES ---
+// Table: profiles
+//   Policy "Profiles visible to authenticated" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+// Table: reservations
+//   Policy "Reservations visible to authenticated" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+//   Policy "Users can create reservations" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (auth.uid() = user_id)
+//   Policy "Users can delete own reservations" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: ((auth.uid() = user_id) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'master'::text)))))
+// Table: rooms
+//   Policy "Master can modify rooms" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'master'::text))))
+//   Policy "Rooms visible to authenticated" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+
+// --- DATABASE FUNCTIONS ---
+// FUNCTION handle_new_user()
+//   CREATE OR REPLACE FUNCTION public.handle_new_user()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     INSERT INTO public.profiles (id, email, name, role)
+//     VALUES (
+//       NEW.id,
+//       NEW.email,
+//       COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+//       'generico'
+//     ) ON CONFLICT (id) DO NOTHING;
+//     RETURN NEW;
+//   END;
+//   $function$
+//

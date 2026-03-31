@@ -6,6 +6,9 @@ import { AppProvider } from '@/stores/useAppStore'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 
 import Index from './pages/Index'
+import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Reservations from './pages/Reservations'
 import Rooms from './pages/Rooms'
@@ -42,6 +45,9 @@ const App = () => (
           <Routes>
             {/* Public / Login route */}
             <Route path="/" element={<Index />} />
+            <Route path="/cadastro" element={<Register />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected routes wrapped in Layout */}
             <Route element={<LayoutWrapper />}>
