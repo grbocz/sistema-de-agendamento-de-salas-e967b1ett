@@ -1,58 +1,177 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { User, Room, Reservation } from '@/types'
-import { MOCK_ROOMS, MOCK_RESERVATIONS } from '@/lib/mock-data'
-import { isConflict } from '@/lib/date-utils'
+import { supabase } from '@/lib/supabase/client'
+import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/use-auth'
 
 interface AppStore {
   user: User | null
   login: (email: string) => void
-  logout: () => void
+  logout: () => Promise<void>
   rooms: Room[]
-  addRoom: (room: Omit<Room, 'id'>) => void
-  updateRoom: (id: string, room: Partial<Room>) => void
-  deleteRoom: (id: string) => void
+  addRoom: (room: Omit<Room, 'id'>) => Promise<void>
+  updateRoom: (id: string, room: Partial<Room>) => Promise<void>
+  deleteRoom: (id: string) => Promise<void>
   reservations: Reservation[]
-  addReservation: (res: Omit<Reservation, 'id'>) => { success: boolean; error?: string }
-  deleteReservation: (id: string) => void
+  addReservation: (res: Omit<Reservation, 'id'>) => Promise<{ success: boolean; error?: string }>
+  deleteReservation: (id: string) => Promise<void>
 }
 
 const AppContext = createContext<AppStore | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [rooms, setRooms] = useState<Room[]>(MOCK_ROOMS)
-  const [reservations, setReservations] = useState<Reservation[]>(MOCK_RESERVATIONS)
+  const { user, signOut } = useAuth()
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const { toast } = useToast()
 
-  const login = (email: string) => {
-    const role = email.toLowerCase().includes('master') ? 'master' : 'generic'
-    setUser({ id: `usr-${Date.now()}`, email, name: role === 'master' ? 'Admin' : 'Usuário', role })
-  }
-
-  const logout = () => setUser(null)
-
-  const addRoom = (room: Omit<Room, 'id'>) => {
-    setRooms((prev) => [...prev, { ...room, id: `room-${Date.now()}` }])
-  }
-
-  const updateRoom = (id: string, data: Partial<Room>) => {
-    setRooms((prev) => prev.map((r) => (r.id === id ? { ...r, ...data } : r)))
-  }
-
-  const deleteRoom = (id: string) => {
-    setRooms((prev) => prev.filter((r) => r.id !== id))
-    setReservations((prev) => prev.filter((r) => r.roomId !== id))
-  }
-
-  const addReservation = (res: Omit<Reservation, 'id'>) => {
-    if (isConflict(res.date, res.startTime, res.duration, res.roomId, reservations)) {
-      return { success: false, error: 'Horário já ocupado nesta sala.' }
+  const fetchRooms = useCallback(async () => {
+    const { data } = await supabase
+      .from('rooms')
+      .select('*')
+      .order('created_at', { ascending: true })
+    if (data) {
+      setRooms(
+        data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          capacity: r.capacity,
+          description: r.description,
+          color: r.color,
+          imageUrl: r.image_url,
+        })),
+      )
     }
-    setReservations((prev) => [...prev, { ...res, id: `res-${Date.now()}` }])
-    return { success: true }
+  }, [])
+
+  const fetchReservations = useCallback(async () => {
+    const { data } = await supabase.from('reservations').select('*, profiles(name)')
+    if (data) {
+      setReservations(
+        data.map((r: any) => ({
+          id: r.id,
+          roomId: r.room_id,
+          date: r.date,
+          startTime: r.start_time,
+          duration: r.duration_minutes,
+          userId: r.user_id,
+          userName: r.profiles?.name || 'Usuário',
+        })),
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      fetchRooms()
+      fetchReservations()
+    }
+  }, [user, fetchRooms, fetchReservations])
+
+  const addRoom = async (room: Omit<Room, 'id'>) => {
+    const { data, error } = await supabase
+      .from('rooms')
+      .insert({
+        name: room.name,
+        capacity: room.capacity,
+        description: room.description,
+        color: room.color,
+        image_url: room.imageUrl,
+      })
+      .select()
+      .single()
+
+    if (data) {
+      setRooms((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          name: data.name,
+          capacity: data.capacity,
+          description: data.description,
+          color: data.color,
+          imageUrl: data.image_url,
+        },
+      ])
+    } else if (error) {
+      toast({ title: 'Erro ao criar sala', description: error.message, variant: 'destructive' })
+    }
   }
 
-  const deleteReservation = (id: string) => {
-    setReservations((prev) => prev.filter((r) => r.id !== id))
+  const updateRoom = async (id: string, data: Partial<Room>) => {
+    const updateData: any = {}
+    if (data.name) updateData.name = data.name
+    if (data.capacity) updateData.capacity = data.capacity
+    if (data.description) updateData.description = data.description
+    if (data.color) updateData.color = data.color
+    if (data.imageUrl !== undefined) updateData.image_url = data.imageUrl
+
+    const { error } = await supabase.from('rooms').update(updateData).eq('id', id)
+    if (!error) {
+      setRooms((prev) => prev.map((r) => (r.id === id ? { ...r, ...data } : r)))
+    } else {
+      toast({ title: 'Erro ao atualizar sala', description: error.message, variant: 'destructive' })
+    }
+  }
+
+  const deleteRoom = async (id: string) => {
+    const { error } = await supabase.from('rooms').delete().eq('id', id)
+    if (!error) {
+      setRooms((prev) => prev.filter((r) => r.id !== id))
+    } else {
+      toast({ title: 'Erro ao deletar sala', description: error.message, variant: 'destructive' })
+    }
+  }
+
+  const addReservation = async (res: Omit<Reservation, 'id'>) => {
+    const { data, error } = await supabase.functions.invoke('book-room', {
+      body: {
+        room_id: res.roomId,
+        date: res.date,
+        start_time: res.startTime,
+        duration_minutes: res.duration,
+      },
+    })
+
+    if (error || data?.error) {
+      return { success: false, error: data?.error || error?.message || 'Erro de conflito' }
+    }
+
+    if (data?.success && data?.data) {
+      const r = data.data
+      setReservations((prev) => [
+        ...prev,
+        {
+          id: r.id,
+          roomId: r.room_id,
+          date: r.date,
+          startTime: r.start_time,
+          duration: r.duration_minutes,
+          userId: r.user_id,
+          userName: r.profiles?.name || user?.name || 'Você',
+        },
+      ])
+      return { success: true }
+    }
+    return { success: false, error: 'Erro desconhecido' }
+  }
+
+  const deleteReservation = async (id: string) => {
+    const { error } = await supabase.from('reservations').delete().eq('id', id)
+    if (!error) {
+      setReservations((prev) => prev.filter((r) => r.id !== id))
+    } else {
+      toast({
+        title: 'Erro ao cancelar reserva',
+        description: error.message,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const login = () => {}
+  const logout = async () => {
+    await signOut()
   }
 
   const store: AppStore = {

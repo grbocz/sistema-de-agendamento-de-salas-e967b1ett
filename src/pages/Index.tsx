@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -16,18 +16,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import useAppStore from '@/stores/useAppStore'
+import { useAuth } from '@/hooks/use-auth'
+import { useToast } from '@/hooks/use-toast'
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(3, 'Senha deve ter no mínimo 3 caracteres'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
 
 export default function Index() {
-  const { user, login } = useAppStore()
+  const { user, loading, signIn } = useAuth()
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
     register,
@@ -39,15 +42,28 @@ export default function Index() {
   })
 
   useEffect(() => {
-    if (user) navigate('/dashboard')
-  }, [user, navigate])
+    if (user && !loading) {
+      if (user.role === 'master') {
+        navigate('/gerenciar-salas')
+      } else {
+        navigate('/dashboard')
+      }
+    }
+  }, [user, loading, navigate])
 
-  const onSubmit = (data: LoginForm) => {
-    login(data.email)
+  const onSubmit = async (data: LoginForm) => {
+    setIsSubmitting(true)
+    const { error } = await signIn(data.email, data.password)
+    setIsSubmitting(false)
+    if (error) {
+      toast({ title: 'Erro ao fazer login', description: error.message, variant: 'destructive' })
+    }
   }
 
+  if (loading) return null
+
   return (
-    <div className="flex items-center justify-center min-h-[80vh]">
+    <div className="flex items-center justify-center min-h-[80vh] p-4">
       <Card className="w-full max-w-md shadow-elevation border-0 ring-1 ring-border/50">
         <CardHeader className="space-y-2 text-center pb-8">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
@@ -55,8 +71,7 @@ export default function Index() {
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">Acesse o Sistema</CardTitle>
           <CardDescription>
-            Use <strong className="text-foreground">generico@email.com</strong> ou{' '}
-            <strong className="text-foreground">master@email.com</strong>
+            Entre com suas credenciais de acesso para agendar salas.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -87,7 +102,7 @@ export default function Index() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full text-md h-11" size="lg">
+            <Button type="submit" className="w-full text-md h-11" size="lg" disabled={isSubmitting}>
               <LogIn className="mr-2 h-4 w-4" /> Entrar
             </Button>
           </CardFooter>

@@ -46,10 +46,10 @@ export function BookingForm({ selectedDate }: BookingFormProps) {
     defaultValues: { roomId: '', startTime: '09:00', duration: '60' },
   })
 
-  const onSubmit = (data: BookingFormValues) => {
+  const onSubmit = async (data: BookingFormValues) => {
     if (!user) return
 
-    const resResult = addReservation({
+    const resResult = await addReservation({
       roomId: data.roomId,
       date: format(selectedDate, 'yyyy-MM-dd'),
       startTime: data.startTime,

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -42,7 +42,7 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialData?: Room | null
-  onSave: (data: Omit<Room, 'id'>) => void
+  onSave: (data: Omit<Room, 'id'>, file?: File | null) => void
 }
 
 const COLORS = [
@@ -54,6 +54,10 @@ const COLORS = [
 ]
 
 export function RoomFormDialog({ open, onOpenChange, initialData, onSave }: Props) {
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomSchema),
     defaultValues: { name: '', capacity: 10, description: '', color: COLORS[0].value },
@@ -67,13 +71,19 @@ export function RoomFormDialog({ open, onOpenChange, initialData, onSave }: Prop
         description: initialData.description,
         color: initialData.color,
       })
+      setPreview(initialData.imageUrl || null)
+      setFile(null)
     } else if (open) {
       form.reset({ name: '', capacity: 10, description: '', color: COLORS[0].value })
+      setPreview(null)
+      setFile(null)
     }
   }, [open, initialData, form])
 
-  const onSubmit = (data: RoomFormValues) => {
-    onSave(data)
+  const onSubmit = async (data: RoomFormValues) => {
+    setIsSaving(true)
+    await onSave({ ...data, imageUrl: initialData?.imageUrl }, file)
+    setIsSaving(false)
   }
 
   return (
@@ -155,9 +165,34 @@ export function RoomFormDialog({ open, onOpenChange, initialData, onSave }: Prop
                 </FormItem>
               )}
             />
+
+            <div className="space-y-2">
+              <FormLabel>Foto da Sala</FormLabel>
+              <div className="flex items-center gap-4">
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-md object-cover border shrink-0"
+                  />
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) {
+                      setFile(f)
+                      setPreview(URL.createObjectURL(f))
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
             <DialogFooter className="pt-4">
-              <Button type="submit" className="w-full">
-                Salvar Sala
+              <Button type="submit" className="w-full" disabled={isSaving}>
+                {isSaving ? 'Salvando...' : 'Salvar Sala'}
               </Button>
             </DialogFooter>
           </form>

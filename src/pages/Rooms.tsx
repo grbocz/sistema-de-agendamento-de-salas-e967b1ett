@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { Edit, Plus, Trash2, Users } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabase/client'
 import {
   Table,
   TableBody,
@@ -28,12 +29,39 @@ export default function Rooms() {
     return <Navigate to="/dashboard" replace />
   }
 
-  const handleSave = (data: Omit<Room, 'id'>) => {
+  const handleSave = async (data: Omit<Room, 'id'>, file?: File | null) => {
+    let imageUrl = data.imageUrl
+
+    if (file) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const { error: uploadError } = await supabase.storage
+        .from('room-images')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        toast({
+          title: 'Erro no upload da imagem',
+          description: uploadError.message,
+          variant: 'destructive',
+        })
+        return
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('room-images').getPublicUrl(fileName)
+
+      imageUrl = publicUrl
+    }
+
+    const finalData = { ...data, imageUrl }
+
     if (editingRoom) {
-      updateRoom(editingRoom.id, data)
+      await updateRoom(editingRoom.id, finalData)
       toast({ title: 'Sala atualizada com sucesso.' })
     } else {
-      addRoom(data)
+      await addRoom(finalData)
       toast({ title: 'Sala criada com sucesso.' })
     }
     setDialogOpen(false)
