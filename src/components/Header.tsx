@@ -2,10 +2,10 @@ import { Link, useLocation } from 'react-router-dom'
 import { LogOut, CalendarDays, LayoutDashboard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import useAppStore from '@/stores/useAppStore'
+import { useAuth } from '@/hooks/use-auth'
 
 export function Header() {
-  const { user, logout } = useAppStore()
+  const { user, signOut } = useAuth()
   const location = useLocation()
 
   if (!user) return null
@@ -16,7 +16,7 @@ export function Header() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     {
       href: '/reservas',
-      label: isMaster ? 'Lista de Reservas' : 'Minhas Reservas',
+      label: 'Lista de Reservas',
       icon: CalendarDays,
     },
     ...(isMaster ? [{ href: '/gerenciar-salas', label: 'Gerenciar Salas', icon: Settings }] : []),
@@ -54,10 +54,15 @@ export function Header() {
 
         <div className="flex items-center gap-4">
           <div className="hidden flex-col items-end sm:flex">
-            <span className="text-sm font-medium leading-none">{user.name}</span>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
+            <span className="text-sm font-medium leading-none">
+              {user.name}{' '}
+              {isMaster && <span className="font-normal text-muted-foreground">(admin)</span>}
+            </span>
+            {!user.email.endsWith('@guest.ethimos.com') && (
+              <span className="text-xs text-muted-foreground">{user.email}</span>
+            )}
           </div>
-          <Button variant="outline" size="icon" onClick={logout} title="Sair">
+          <Button variant="outline" size="icon" onClick={() => signOut()} title="Sair">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

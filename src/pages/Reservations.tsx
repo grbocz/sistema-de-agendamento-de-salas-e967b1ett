@@ -25,12 +25,7 @@ export default function Reservations() {
   const isMaster = user?.role === 'master'
 
   const filteredReservations = useMemo(() => {
-    let result = reservations
-
-    // Generic users only see their own
-    if (!isMaster && user) {
-      result = result.filter((r) => r.userId === user.email)
-    }
+    let result = [...reservations]
 
     if (filterRoom !== 'all') {
       result = result.filter((r) => r.roomId === filterRoom)
@@ -46,7 +41,7 @@ export default function Reservations() {
       if (dateCompare !== 0) return dateCompare
       return a.startTime.localeCompare(b.startTime)
     })
-  }, [reservations, filterRoom, filterDate, isMaster, user])
+  }, [reservations, filterRoom, filterDate])
 
   const handleDelete = (id: string) => {
     deleteReservation(id)
@@ -56,10 +51,10 @@ export default function Reservations() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          {isMaster ? 'Lista de Reservas' : 'Minhas Reservas'}
-        </h1>
-        <p className="text-muted-foreground mt-1">Acompanhe todos os agendamentos realizados.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Lista de Reservas</h1>
+        <p className="text-muted-foreground mt-1">
+          Acompanhe todos os agendamentos realizados pela equipe.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border">

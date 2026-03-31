@@ -32,7 +32,7 @@ import {
 const roomSchema = z.object({
   name: z.string().min(3, 'Nome muito curto'),
   capacity: z.coerce.number().min(1, 'Capacidade inválida'),
-  description: z.string().min(5, 'Descrição muito curta'),
+  description: z.string(),
   color: z.string().min(1, 'Selecione uma cor'),
 })
 

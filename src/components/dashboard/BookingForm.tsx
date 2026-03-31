@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
+import { useSearchParams } from 'react-router-dom'
 
+import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import {
   Form,
@@ -35,16 +38,26 @@ type BookingFormValues = z.infer<typeof bookingSchema>
 
 interface BookingFormProps {
   selectedDate: Date
+  selectedRoomId?: string
 }
 
-export function BookingForm({ selectedDate }: BookingFormProps) {
+export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) {
   const { rooms, addReservation, user } = useAppStore()
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
+
+  const activeRoomId = selectedRoomId || searchParams.get('roomId') || ''
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
-    defaultValues: { roomId: '', startTime: '09:00', duration: '60' },
+    defaultValues: { roomId: activeRoomId, startTime: '09:00', duration: '60' },
   })
+
+  useEffect(() => {
+    if (activeRoomId) {
+      form.setValue('roomId', activeRoomId)
+    }
+  }, [activeRoomId, form])
 
   const onSubmit = async (data: BookingFormValues) => {
     if (!user) return
@@ -88,31 +101,40 @@ export function BookingForm({ selectedDate }: BookingFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="roomId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Sala</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a sala" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {rooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id}>
-                          {room.name} ({room.capacity} cap.)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="roomId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sala</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled>
+                      <FormControl>
+                        <SelectTrigger className="bg-muted">
+                          <SelectValue placeholder="Selecione a sala" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {rooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            {room.name} ({room.capacity} cap.)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>Solicitante</FormLabel>
+                <FormControl>
+                  <Input value={user?.name || ''} disabled className="bg-muted" />
+                </FormControl>
+              </FormItem>
+            </div>
             <div className="grid grid-cols-2 gap-4">
+              {' '}
               <FormField
                 control={form.control}
                 name="startTime"
