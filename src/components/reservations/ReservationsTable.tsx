@@ -70,7 +70,9 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                   </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {(res as any).user_name || res.userName}
+                  {((res as any).user_name || res.userName) === 'Acesso Padrão'
+                    ? 'Usuário'
+                    : (res as any).user_name || res.userName}
                 </TableCell>
                 {isMaster && (
                   <TableCell className="text-right">

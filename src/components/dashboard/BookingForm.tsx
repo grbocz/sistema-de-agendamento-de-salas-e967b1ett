@@ -52,21 +52,23 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
 
   const activeRoomId = selectedRoomId || searchParams.get('roomId') || ''
 
+  const defaultUserName = user?.name === 'Acesso Padrão' ? '' : user?.name || ''
+
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       roomId: activeRoomId,
-      userName: user?.name || '',
+      userName: defaultUserName,
       startTime: '09:00',
       duration: '60',
     },
   })
 
   useEffect(() => {
-    if (user?.name && !form.getValues('userName')) {
-      form.setValue('userName', user.name)
+    if (defaultUserName && !form.getValues('userName')) {
+      form.setValue('userName', defaultUserName)
     }
-  }, [user, form])
+  }, [defaultUserName, form])
 
   useEffect(() => {
     if (activeRoomId) {
@@ -88,15 +90,14 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
     } as any)
 
     if (resResult.success) {
-      // Garante que o nome customizado seja salvo no banco
+      // Garante que o nome customizado seja salvo no banco com os critérios corretos
       await supabase
         .from('reservations')
         .update({ user_name: data.userName })
-        .match({
-          room_id: data.roomId,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-          start_time: data.startTime,
-        })
+        .eq('room_id', data.roomId)
+        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
+        .like('start_time', `${data.startTime}%`)
+        .eq('user_id', user.id)
 
       toast({
         title: 'Reserva confirmada!',
@@ -104,6 +105,9 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
         variant: 'default',
       })
       form.reset({ ...data, startTime: '' })
+
+      // Força o recarregamento para que a Agenda e a Lista de Reservas atualizem com o nome correto imediatamente
+      setTimeout(() => window.location.reload(), 500)
     } else {
       toast({ title: 'Conflito de horário', description: resResult.error, variant: 'destructive' })
     }
