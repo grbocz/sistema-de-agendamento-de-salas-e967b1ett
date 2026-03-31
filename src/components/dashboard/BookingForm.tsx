@@ -77,7 +77,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
         description: 'Sua sala foi agendada com sucesso.',
         variant: 'default',
       })
-      form.reset({ ...data, startTime: '', roomId: '' })
+      form.reset({ ...data, startTime: '' })
     } else {
       toast({ title: 'Conflito de horário', description: resResult.error, variant: 'destructive' })
     }
@@ -105,26 +105,26 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
               <FormField
                 control={form.control}
                 name="roomId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sala</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled>
+                render={({ field }) => {
+                  const selectedRoom = rooms.find((r) => r.id === field.value)
+                  return (
+                    <FormItem>
+                      <FormLabel>Sala</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="bg-muted">
-                          <SelectValue placeholder="Selecione a sala" />
-                        </SelectTrigger>
+                        <Input
+                          value={
+                            selectedRoom
+                              ? `${selectedRoom.name} (${selectedRoom.capacity} cap.)`
+                              : 'Selecione uma sala no carrossel'
+                          }
+                          disabled
+                          className="bg-muted"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {rooms.map((room) => (
-                          <SelectItem key={room.id} value={room.id}>
-                            {room.name} ({room.capacity} cap.)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
               <FormItem>
                 <FormLabel>Solicitante</FormLabel>
