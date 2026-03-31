@@ -45,6 +45,7 @@ export type Database = {
           room_id: string
           start_time: string
           user_id: string
+          user_name: string | null
         }
         Insert: {
           created_at?: string
@@ -54,6 +55,7 @@ export type Database = {
           room_id: string
           start_time: string
           user_id: string
+          user_name?: string | null
         }
         Update: {
           created_at?: string
@@ -63,6 +65,7 @@ export type Database = {
           room_id?: string
           start_time?: string
           user_id?: string
+          user_name?: string | null
         }
         Relationships: [
           {
@@ -273,6 +276,7 @@ export const Constants = {
 //   start_time: time without time zone (not null)
 //   duration_minutes: integer (not null)
 //   created_at: timestamp with time zone (not null, default: now())
+//   user_name: text (nullable)
 // Table: rooms
 //   id: uuid (not null, default: gen_random_uuid())
 //   name: text (not null)

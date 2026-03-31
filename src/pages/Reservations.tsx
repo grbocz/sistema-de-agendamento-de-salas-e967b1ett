@@ -52,6 +52,7 @@ export default function Reservations() {
 
   const [filterRoom, setFilterRoom] = useState('all')
   const [filterDate, setFilterDate] = useState('')
+  const [filterUser, setFilterUser] = useState('')
   const [editingRes, setEditingRes] = useState<Reservation | null>(null)
 
   const isMaster = user?.role === 'master'
@@ -65,6 +66,13 @@ export default function Reservations() {
 
     if (filterDate) {
       result = result.filter((r) => r.date === filterDate)
+    }
+
+    if (filterUser) {
+      result = result.filter((r) => {
+        const name = (r as any).user_name || r.userName || ''
+        return name.toLowerCase().includes(filterUser.toLowerCase())
+      })
     }
 
     // Sort by date and time
@@ -158,6 +166,14 @@ export default function Reservations() {
         <div className="flex-1 space-y-1.5">
           <Label>Filtrar por Data</Label>
           <Input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+        </div>
+        <div className="flex-1 space-y-1.5">
+          <Label>Filtrar por Solicitante</Label>
+          <Input
+            placeholder="Nome do solicitante"
+            value={filterUser}
+            onChange={(e) => setFilterUser(e.target.value)}
+          />
         </div>
       </div>
 
