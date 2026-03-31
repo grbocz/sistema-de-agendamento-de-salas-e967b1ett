@@ -98,7 +98,7 @@ export default function Dashboard() {
         </div>
 
         <div className="sticky top-24">
-          <BookingForm selectedDate={date} />
+          <BookingForm selectedDate={date} selectedRoomId={selectedRoomId || undefined} />
         </div>
       </div>
     </div>

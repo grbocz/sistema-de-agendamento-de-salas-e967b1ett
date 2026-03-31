@@ -55,7 +55,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
 
   useEffect(() => {
     if (activeRoomId) {
-      form.setValue('roomId', activeRoomId)
+      form.setValue('roomId', activeRoomId, { shouldValidate: true })
     }
   }, [activeRoomId, form])
 
@@ -117,8 +117,9 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
                               ? `${selectedRoom.name} (${selectedRoom.capacity} cap.)`
                               : 'Selecione uma sala no carrossel'
                           }
-                          disabled
-                          className="bg-muted"
+                          readOnly
+                          className="bg-muted cursor-not-allowed text-muted-foreground"
+                          tabIndex={-1}
                         />
                       </FormControl>
                       <FormMessage />
@@ -129,7 +130,12 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
               <FormItem>
                 <FormLabel>Solicitante</FormLabel>
                 <FormControl>
-                  <Input value={user?.name || ''} disabled className="bg-muted" />
+                  <Input
+                    value={user?.name || ''}
+                    readOnly
+                    className="bg-muted cursor-not-allowed text-muted-foreground"
+                    tabIndex={-1}
+                  />
                 </FormControl>
               </FormItem>
             </div>
