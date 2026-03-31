@@ -92,24 +92,12 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
     } as any)
 
     if (resResult.success) {
-      // Garante que o nome customizado seja salvo no banco com os critérios corretos
-      await supabase
-        .from('reservations')
-        .update({ user_name: data.userName })
-        .eq('room_id', data.roomId)
-        .eq('date', format(selectedDate, 'yyyy-MM-dd'))
-        .like('start_time', `${data.startTime}%`)
-        .eq('user_id', user.id)
-
       toast({
         title: 'Reserva confirmada!',
         description: 'Sua sala foi agendada com sucesso.',
         variant: 'default',
       })
       form.reset({ ...data, startTime: '' })
-
-      // Força o recarregamento para que a Agenda e a Lista de Reservas atualizem com o nome correto imediatamente
-      setTimeout(() => window.location.reload(), 500)
     } else {
       toast({ title: 'Conflito de horário', description: resResult.error, variant: 'destructive' })
     }

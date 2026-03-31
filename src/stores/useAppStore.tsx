@@ -15,6 +15,7 @@ interface AppStore {
   reservations: Reservation[]
   addReservation: (res: Omit<Reservation, 'id'>) => Promise<{ success: boolean; error?: string }>
   deleteReservation: (id: string) => Promise<void>
+  updateReservation: (id: string, data: any) => Promise<void>
 }
 
 const AppContext = createContext<AppStore | null>(null)
@@ -56,6 +57,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           duration: r.duration_minutes,
           userId: r.user_id,
           userName: r.profiles?.name || 'Usuário',
+          realUserName: r.user_name || r.solicitante || '',
         })),
       )
     }
@@ -130,6 +132,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         date: res.date,
         start_time: res.startTime,
         duration_minutes: res.duration,
+        user_name: (res as any).user_name || (res as any).userName,
       },
     })
 
@@ -149,11 +152,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           duration: r.duration_minutes,
           userId: r.user_id,
           userName: r.profiles?.name || user?.name || 'Você',
+          realUserName: r.user_name || (res as any).user_name || (res as any).userName || '',
         },
       ])
       return { success: true }
     }
     return { success: false, error: 'Erro desconhecido' }
+  }
+
+  const updateReservation = async (id: string, data: any) => {
+    const updateData: any = {}
+    if (data.user_name || data.userName) updateData.user_name = data.user_name || data.userName
+    if (data.date) updateData.date = data.date
+    if (data.startTime) updateData.start_time = data.startTime
+    if (data.duration) updateData.duration_minutes = data.duration
+
+    const { error } = await supabase.from('reservations').update(updateData).eq('id', id)
+    if (!error) {
+      setReservations((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                ...data,
+                realUserName: data.user_name || data.userName || (r as any).realUserName,
+              }
+            : r,
+        ),
+      )
+      toast({ title: 'Reserva atualizada', description: 'As alterações foram salvas.' })
+    } else {
+      toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' })
+    }
   }
 
   const deleteReservation = async (id: string) => {
@@ -185,6 +215,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     reservations,
     addReservation,
     deleteReservation,
+    updateReservation,
   }
 
   return React.createElement(AppContext.Provider, { value: store }, children)

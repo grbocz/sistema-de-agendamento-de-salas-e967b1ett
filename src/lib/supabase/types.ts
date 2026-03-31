@@ -43,6 +43,7 @@ export type Database = {
           duration_minutes: number
           id: string
           room_id: string
+          solicitante: string | null
           start_time: string
           user_id: string
           user_name: string | null
@@ -53,6 +54,7 @@ export type Database = {
           duration_minutes: number
           id?: string
           room_id: string
+          solicitante?: string | null
           start_time: string
           user_id: string
           user_name?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           room_id?: string
+          solicitante?: string | null
           start_time?: string
           user_id?: string
           user_name?: string | null
@@ -277,6 +280,7 @@ export const Constants = {
 //   duration_minutes: integer (not null)
 //   created_at: timestamp with time zone (not null, default: now())
 //   user_name: text (nullable)
+//   solicitante: text (nullable)
 // Table: rooms
 //   id: uuid (not null, default: gen_random_uuid())
 //   name: text (not null)
