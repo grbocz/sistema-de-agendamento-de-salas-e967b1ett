@@ -30,7 +30,7 @@ export function Header() {
             <CalendarDays className="h-5 w-5" />
           </div>
           <span className="hidden font-bold sm:inline-block text-lg tracking-tight">
-            CurlingRooms
+            Ethimos Campinas1
           </span>
         </div>
 
