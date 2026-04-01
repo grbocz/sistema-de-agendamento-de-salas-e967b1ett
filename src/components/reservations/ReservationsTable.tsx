@@ -1,5 +1,6 @@
+import { useState, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Trash2, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 
 import {
   Table,
@@ -22,7 +23,62 @@ interface Props {
   isMaster: boolean
 }
 
+type SortKey = 'room' | 'date' | 'time' | 'duration' | 'user' | 'status'
+
 export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMaster }: Props) {
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(
+    null,
+  )
+
+  const sortedReservations = useMemo(() => {
+    let sortable = [...reservations]
+    if (sortConfig !== null) {
+      sortable.sort((a, b) => {
+        let aValue: any
+        let bValue: any
+
+        if (sortConfig.key === 'room') {
+          aValue = rooms.find((r) => r.id === a.roomId)?.name || ''
+          bValue = rooms.find((r) => r.id === b.roomId)?.name || ''
+        } else if (sortConfig.key === 'date') {
+          aValue = a.date
+          bValue = b.date
+        } else if (sortConfig.key === 'time') {
+          aValue = timeToMins(a.startTime)
+          bValue = timeToMins(b.startTime)
+        } else if (sortConfig.key === 'duration') {
+          aValue = a.duration
+          bValue = b.duration
+        } else if (sortConfig.key === 'user') {
+          aValue = (a as any).realUserName || (a as any).user_name || a.userName || ''
+          bValue = (b as any).realUserName || (b as any).user_name || b.userName || ''
+        } else if (sortConfig.key === 'status') {
+          aValue = a.status
+          bValue = b.status
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+    return sortable
+  }, [reservations, rooms, sortConfig])
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortConfig?.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+    if (sortConfig.direction === 'asc') return <ArrowUp className="ml-2 h-4 w-4" />
+    return <ArrowDown className="ml-2 h-4 w-4" />
+  }
+
   if (reservations.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-lg border border-dashed">
@@ -36,17 +92,59 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow>
-            <TableHead>Sala</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Horário</TableHead>
-            <TableHead>Duração</TableHead>
-            <TableHead>Solicitante</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('room')}
+            >
+              <div className="flex items-center">
+                Sala <SortIcon columnKey="room" />
+              </div>
+            </TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('date')}
+            >
+              <div className="flex items-center">
+                Data <SortIcon columnKey="date" />
+              </div>
+            </TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('time')}
+            >
+              <div className="flex items-center">
+                Horário <SortIcon columnKey="time" />
+              </div>
+            </TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('duration')}
+            >
+              <div className="flex items-center">
+                Duração <SortIcon columnKey="duration" />
+              </div>
+            </TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('user')}
+            >
+              <div className="flex items-center">
+                Solicitante <SortIcon columnKey="user" />
+              </div>
+            </TableHead>
+            <TableHead
+              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+              onClick={() => requestSort('status')}
+            >
+              <div className="flex items-center">
+                Status <SortIcon columnKey="status" />
+              </div>
+            </TableHead>
             {isMaster && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {reservations.map((res) => {
+          {sortedReservations.map((res) => {
             const room = rooms.find((r) => r.id === res.roomId)
             const endTime = minsToTime(timeToMins(res.startTime) + res.duration)
 

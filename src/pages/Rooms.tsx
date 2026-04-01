@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Edit, Plus, Trash2, Users } from 'lucide-react'
 
@@ -23,6 +23,10 @@ export default function Rooms() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+
+  const sortedRooms = useMemo(() => {
+    return [...rooms].sort((a, b) => a.name.localeCompare(b.name))
+  }, [rooms])
 
   // Auth Guard for Master
   if (user?.role !== 'master') {
@@ -109,7 +113,7 @@ export default function Rooms() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rooms.map((room) => (
+            {sortedRooms.map((room) => (
               <TableRow key={room.id} className="group transition-colors">
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">

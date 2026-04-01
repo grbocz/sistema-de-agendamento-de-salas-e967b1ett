@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { ptBR } from 'date-fns/locale'
+import { Users } from 'lucide-react'
 
 import { Calendar } from '@/components/ui/calendar'
 import { Card } from '@/components/ui/card'
@@ -18,13 +19,20 @@ import { cn } from '@/lib/utils'
 export default function Dashboard() {
   const [date, setDate] = useState<Date>(new Date())
   const { reservations, rooms } = useAppStore()
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(rooms[0]?.id || null)
+
+  const sortedRooms = useMemo(() => {
+    return [...rooms].sort((a, b) => a.name.localeCompare(b.name))
+  }, [rooms])
+
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(sortedRooms[0]?.id || null)
 
   useEffect(() => {
-    if (!selectedRoomId && rooms.length > 0) {
-      setSelectedRoomId(rooms[0].id)
+    if (!selectedRoomId && sortedRooms.length > 0) {
+      setSelectedRoomId(sortedRooms[0].id)
     }
-  }, [rooms, selectedRoomId])
+  }, [sortedRooms, selectedRoomId])
+
+  const activeRoom = sortedRooms.find((r) => r.id === selectedRoomId)
 
   return (
     <div className="space-y-6">
@@ -54,7 +62,7 @@ export default function Dashboard() {
               </h3>
               <Carousel opts={{ align: 'start' }} className="w-full">
                 <CarouselContent className="-ml-3">
-                  {rooms.map((room) => (
+                  {sortedRooms.map((room) => (
                     <CarouselItem key={room.id} className="pl-3 basis-1/2">
                       <button
                         onClick={() => setSelectedRoomId(room.id)}
@@ -84,6 +92,22 @@ export default function Dashboard() {
                 <CarouselPrevious className="-left-6 bg-background shadow-md" />
                 <CarouselNext className="-right-6 bg-background shadow-md" />
               </Carousel>
+
+              {activeRoom && (
+                <Card className="mt-6 p-4 shadow-sm border-l-4 border-l-primary bg-muted/20">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h4 className="font-semibold text-lg leading-none text-foreground">
+                      {activeRoom.name}
+                    </h4>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-background px-2 py-1 rounded-md border shadow-subtle shrink-0">
+                      <Users className="w-3.5 h-3.5" /> {activeRoom.capacity} lugares
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {activeRoom.description || 'Nenhuma descrição disponível.'}
+                  </p>
+                </Card>
+              )}
             </div>
           </div>
 

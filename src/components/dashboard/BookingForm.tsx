@@ -99,7 +99,11 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       })
       form.reset({ ...data, startTime: '' })
     } else {
-      toast({ title: 'Conflito de horário', description: resResult.error, variant: 'destructive' })
+      toast({
+        title: 'Horário indisponível',
+        description: 'Reserva não realizada',
+        variant: 'destructive',
+      })
     }
   }
 
