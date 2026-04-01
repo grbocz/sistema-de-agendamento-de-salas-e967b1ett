@@ -51,11 +51,7 @@ export default function Index() {
 
   useEffect(() => {
     if (user && !loading) {
-      if (user.role === 'master') {
-        navigate('/gerenciar-salas')
-      } else {
-        navigate('/dashboard')
-      }
+      navigate('/dashboard')
     }
   }, [user, loading, navigate])
 
