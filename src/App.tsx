@@ -44,19 +44,6 @@ const App = () => (
           <Sonner />
           <Routes>
 
-          //  {/* Public / Login route */}
-          //  <Route path="/" element={<Index />}
-          //  <Route path="/cadastro" element={<Register />} />
-          //  <Route path="/esqueci-senha" element={<ForgotPassword />} />
-          //  <Route path="/reset-password" element={<ResetPassword />} />
-
-          //  {/* Protected routes wrapped in Layout */}
-          //  <Route element={<LayoutWrapper />}>
-          //    <Route path="/dashboard" element={<Dashboard />} />
-          //    <Route path="/reservas" element={<Reservations />} />
-          //    <Route path="/gerenciar-salas" element={<Rooms />} />
-          //  </Route>
-
           {/* Public / Login route */}
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/cadastro" element={<Register />} />
