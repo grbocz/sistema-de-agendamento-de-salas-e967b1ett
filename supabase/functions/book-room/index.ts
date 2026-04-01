@@ -33,6 +33,7 @@ Deno.serve(async (req: Request) => {
       .select('*')
       .eq('room_id', room_id)
       .eq('date', date)
+      .in('status', ['aprovada', 'pendente'])
 
     if (fetchError) throw fetchError
 
@@ -51,10 +52,13 @@ Deno.serve(async (req: Request) => {
     })
 
     if (hasConflict) {
-      return new Response(JSON.stringify({ error: 'Horário já ocupado' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'Horário indisponível - Reserva não realizada' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
+      )
     }
 
     const finalUserName = user_name || user.user_metadata?.name || 'Solicitante'
