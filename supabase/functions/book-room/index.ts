@@ -68,6 +68,7 @@ Deno.serve(async (req: Request) => {
         start_time,
         duration_minutes: parseInt(duration_minutes, 10),
         user_name: finalUserName,
+        status: 'pendente',
       })
       .select('*, profiles(name)')
       .single()

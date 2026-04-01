@@ -41,6 +41,7 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
             <TableHead>Horário</TableHead>
             <TableHead>Duração</TableHead>
             <TableHead>Solicitante</TableHead>
+            <TableHead>Status</TableHead>
             {isMaster && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
         </TableHeader>
@@ -71,6 +72,30 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                 </TableCell>
                 <TableCell className="font-semibold text-primary">
                   {(res as any).realUserName || (res as any).user_name || res.userName}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      res.status === 'aprovada'
+                        ? 'default'
+                        : res.status === 'reprovada'
+                          ? 'destructive'
+                          : 'outline'
+                    }
+                    className={
+                      res.status === 'pendente'
+                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100/80'
+                        : res.status === 'aprovada'
+                          ? 'bg-green-100 text-green-800 border-transparent hover:bg-green-100/80'
+                          : ''
+                    }
+                  >
+                    {res.status === 'aprovada'
+                      ? 'Aprovada'
+                      : res.status === 'reprovada'
+                        ? 'Reprovada'
+                        : 'Pendente'}
+                  </Badge>
                 </TableCell>
                 {isMaster && (
                   <TableCell className="text-right">

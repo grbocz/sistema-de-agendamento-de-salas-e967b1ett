@@ -58,6 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           userId: r.user_id,
           userName: r.profiles?.name || 'Usuário',
           realUserName: r.user_name || r.solicitante || '',
+          status: r.status || 'pendente',
         })),
       )
     }
@@ -153,6 +154,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           userId: r.user_id,
           userName: r.profiles?.name || user?.name || 'Você',
           realUserName: r.user_name || (res as any).user_name || (res as any).userName || '',
+          status: r.status || 'pendente',
         },
       ])
       return { success: true }
@@ -166,6 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (data.date) updateData.date = data.date
     if (data.startTime) updateData.start_time = data.startTime
     if (data.duration) updateData.duration_minutes = data.duration
+    if (data.status) updateData.status = data.status
 
     const { error } = await supabase.from('reservations').update(updateData).eq('id', id)
     if (!error) {

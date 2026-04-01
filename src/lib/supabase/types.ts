@@ -44,6 +44,7 @@ export type Database = {
           id: string
           room_id: string
           start_time: string
+          status: string
           user_id: string
           user_name: string | null
         }
@@ -54,6 +55,7 @@ export type Database = {
           id?: string
           room_id: string
           start_time: string
+          status?: string
           user_id: string
           user_name?: string | null
         }
@@ -64,6 +66,7 @@ export type Database = {
           id?: string
           room_id?: string
           start_time?: string
+          status?: string
           user_id?: string
           user_name?: string | null
         }
@@ -277,6 +280,7 @@ export const Constants = {
 //   duration_minutes: integer (not null)
 //   created_at: timestamp with time zone (not null, default: now())
 //   user_name: text (nullable)
+//   status: text (not null, default: 'pendente'::text)
 // Table: rooms
 //   id: uuid (not null, default: gen_random_uuid())
 //   name: text (not null)
