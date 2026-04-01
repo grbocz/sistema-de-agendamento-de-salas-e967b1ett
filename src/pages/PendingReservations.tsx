@@ -115,7 +115,9 @@ export default function PendingReservations() {
                       </TableCell>
                       <TableCell>{res.startTime}</TableCell>
                       <TableCell>{res.duration} min</TableCell>
-                      <TableCell>{res.userName}</TableCell>
+                      <TableCell>
+                        {(res as any).realUserName || (res as any).user_name || res.userName}
+                      </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           size="sm"
