@@ -121,7 +121,7 @@ export default function Index() {
             <TabsContent value="padrao">
               <form onSubmit={handleSubmitGuest(onGuestSubmit)} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Seu Nome</Label>
+                  <Label htmlFor="name">Seu nome e sobrenome (para não ser confundido)</Label>
                   <Input
                     id="name"
                     placeholder="Ex: João Silva"
