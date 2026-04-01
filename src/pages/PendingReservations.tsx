@@ -45,14 +45,8 @@ export default function PendingReservations() {
 
       if (error) throw error
 
-      // Remove from local state immediately for snappy UI
+      // Remove from local state immediately for snappy UI (optimistic update)
       setLocalReservations((prev) => prev.filter((r) => r.id !== id))
-
-      // Update in app store if it has a direct update method
-      const storeState = useAppStore.getState?.() || (useAppStore as any)
-      if (typeof storeState.fetchReservations === 'function') {
-        storeState.fetchReservations()
-      }
 
       toast({
         title: 'Sucesso',

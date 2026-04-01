@@ -125,7 +125,6 @@ export default function Reservations() {
     if (!error) {
       toast({ title: 'Reserva atualizada com sucesso!' })
       setEditingRes(null)
-      setTimeout(() => window.location.reload(), 500)
     } else {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' })
     }

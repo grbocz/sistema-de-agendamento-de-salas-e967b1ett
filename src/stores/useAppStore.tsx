@@ -68,6 +68,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       fetchRooms()
       fetchReservations()
+
+      const channel = supabase
+        .channel('public:reservations')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
+          fetchReservations()
+        })
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     }
   }, [user, fetchRooms, fetchReservations])
 
