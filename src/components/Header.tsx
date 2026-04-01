@@ -1,16 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, CalendarDays, LayoutDashboard, Settings } from 'lucide-react'
+import { LogOut, CalendarDays, LayoutDashboard, Settings, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
+import useAppStore from '@/stores/useAppStore'
 
 export function Header() {
   const { user, signOut } = useAuth()
   const location = useLocation()
+  const { reservations } = useAppStore()
 
   if (!user) return null
 
   const isMaster = user.role === 'master'
+  const pendingCount = reservations?.filter((r) => r.status === 'pendente').length || 0
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,7 +22,17 @@ export function Header() {
       label: 'Lista de Reservas',
       icon: CalendarDays,
     },
-    ...(isMaster ? [{ href: '/gerenciar-salas', label: 'Gerenciar Salas', icon: Settings }] : []),
+    ...(isMaster
+      ? [
+          {
+            href: '/reservas-pendentes',
+            label: 'Reservas Pendentes',
+            icon: ClipboardList,
+            badge: pendingCount,
+          },
+          { href: '/gerenciar-salas', label: 'Gerenciar Salas', icon: Settings },
+        ]
+      : []),
   ]
 
   return (
@@ -42,10 +55,17 @@ export function Header() {
                 <Button
                   variant={isActive ? 'secondary' : 'ghost'}
                   size="sm"
-                  className={cn('gap-2', isActive && 'bg-secondary/50')}
+                  className={cn('gap-2 relative', isActive && 'bg-secondary/50')}
                 >
                   <link.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline-block">{link.label}</span>
+                  <span className="hidden sm:inline-block">
+                    {link.label}
+                    {'badge' in link && (link.badge as number) > 0 ? (
+                      <span className="ml-2 inline-flex items-center justify-center rounded-full bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
+                        {link.badge as number}
+                      </span>
+                    ) : null}
+                  </span>
                 </Button>
               </Link>
             )

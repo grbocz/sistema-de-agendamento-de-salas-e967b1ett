@@ -24,4 +24,5 @@ export interface Reservation {
   duration: number // minutes
   userId: string
   userName: string
+  status?: 'pendente' | 'aprovada' | 'reprovada'
 }

@@ -12,6 +12,7 @@ import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Reservations from './pages/Reservations'
 import Rooms from './pages/Rooms'
+import PendingReservations from './pages/PendingReservations'
 import NotFound from './pages/NotFound'
 import Layout from './components/Layout'
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/reservas" element={<Reservations />} />
               <Route path="/gerenciar-salas" element={<Rooms />} />
+              <Route path="/reservas-pendentes" element={<PendingReservations />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

@@ -5,6 +5,7 @@ import { Clock } from 'lucide-react'
 import { Reservation, Room } from '@/types'
 import { timeToMins, minsToTime } from '@/lib/date-utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 interface TimelineProps {
   date: Date
@@ -21,7 +22,7 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
   const dateStr = format(date, 'yyyy-MM-dd')
 
   const todaysReservations = useMemo(() => {
-    let filtered = reservations.filter((r) => r.date === dateStr)
+    let filtered = reservations.filter((r) => r.date === dateStr && r.status !== 'reprovada')
     if (selectedRoomId) {
       filtered = filtered.filter((r) => r.roomId === selectedRoomId)
     }
@@ -71,15 +72,20 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
               const room = rooms.find((r) => r.id === res.roomId)
               const endTime = minsToTime(startMins + res.duration)
 
+              const isPending = res.status === 'pendente'
+
               return (
                 <div
                   key={res.id}
-                  className="absolute left-2 right-2 rounded-md border px-3 py-1.5 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group"
+                  className={cn(
+                    'absolute left-2 right-2 rounded-md border px-3 py-1.5 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group',
+                    isPending && 'opacity-50 border-dashed border-2',
+                  )}
                   style={{
                     top: `${top}px`,
                     height: `${height}px`,
                     backgroundColor: room?.color || 'hsl(var(--primary))',
-                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderColor: isPending ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
                   }}
                 >
                   <div className="font-bold flex justify-between items-center opacity-90 group-hover:opacity-100">
