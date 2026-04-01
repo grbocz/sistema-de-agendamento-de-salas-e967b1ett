@@ -59,6 +59,14 @@ Deno.serve(async (req: Request) => {
 
     const finalUserName = user_name || user.user_metadata?.name || 'Solicitante'
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const status = profile?.role === 'master' ? 'aprovada' : 'pendente'
+
     const { data: inserted, error: insertError } = await supabase
       .from('reservations')
       .insert({
@@ -68,7 +76,7 @@ Deno.serve(async (req: Request) => {
         start_time,
         duration_minutes: parseInt(duration_minutes, 10),
         user_name: finalUserName,
-        status: 'pendente',
+        status,
       })
       .select('*, profiles(name)')
       .single()
