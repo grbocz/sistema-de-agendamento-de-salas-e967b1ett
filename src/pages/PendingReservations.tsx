@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Check, X, ClipboardList } from 'lucide-react'
 
@@ -14,22 +14,19 @@ import {
 } from '@/components/ui/table'
 import { useAuth } from '@/hooks/use-auth'
 import useAppStore from '@/stores/useAppStore'
-import { supabase } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Reservation } from '@/types'
 
 export default function PendingReservations() {
   const { user } = useAuth()
-  const { rooms, reservations } = useAppStore()
+  const { rooms, reservations, updateReservation } = useAppStore()
   const { toast } = useToast()
 
-  const [localReservations, setLocalReservations] = useState<Reservation[]>([])
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    // Keep local state in sync with global store for pending reservations
-    setLocalReservations(reservations.filter((r) => r.status === 'pendente'))
-  }, [reservations])
+  const pendingReservations = useMemo(
+    () => reservations.filter((r) => r.status === 'pendente'),
+    [reservations],
+  )
 
   if (user?.role !== 'master') {
     return <Navigate to="/dashboard" replace />
@@ -37,30 +34,21 @@ export default function PendingReservations() {
 
   const handleUpdateStatus = async (id: string, newStatus: 'aprovada' | 'reprovada') => {
     setLoadingId(id)
-    try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ status: newStatus })
-        .eq('id', id)
+    const res = await updateReservation(id, { status: newStatus })
 
-      if (error) throw error
-
-      // Remove from local state immediately for snappy UI (optimistic update)
-      setLocalReservations((prev) => prev.filter((r) => r.id !== id))
-
+    if (res.success) {
       toast({
         title: 'Sucesso',
         description: `Reserva ${newStatus} com sucesso.`,
       })
-    } catch (error: any) {
+    } else {
       toast({
         title: 'Erro',
-        description: 'Não foi possível atualizar o status da reserva.',
+        description: res.error || 'Não foi possível atualizar o status da reserva.',
         variant: 'destructive',
       })
-    } finally {
-      setLoadingId(null)
     }
+    setLoadingId(null)
   }
 
   const getRoomName = (roomId: string) => {
@@ -85,18 +73,18 @@ export default function PendingReservations() {
         <CardHeader>
           <CardTitle>Aguardando Aprovação</CardTitle>
           <CardDescription>
-            Existem {localReservations.length} reservas pendentes no momento.
+            Existem {pendingReservations.length} reservas pendentes no momento.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {localReservations.length === 0 ? (
+          {pendingReservations.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               Nenhuma reserva pendente de aprovação.
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border bg-white shadow-subtle overflow-hidden">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/30">
                   <TableRow>
                     <TableHead>Sala</TableHead>
                     <TableHead>Data</TableHead>
@@ -107,17 +95,15 @@ export default function PendingReservations() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {localReservations.map((res) => (
-                    <TableRow key={res.id}>
+                  {pendingReservations.map((res) => (
+                    <TableRow key={res.id} className="group transition-colors">
                       <TableCell className="font-medium">{getRoomName(res.roomId)}</TableCell>
                       <TableCell>
                         {new Date(res.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell>{res.startTime}</TableCell>
                       <TableCell>{res.duration} min</TableCell>
-                      <TableCell>
-                        {(res as any).realUserName || (res as any).user_name || res.userName}
-                      </TableCell>
+                      <TableCell>{(res as any).realUserName || res.userName}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           size="sm"

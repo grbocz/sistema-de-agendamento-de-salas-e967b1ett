@@ -62,19 +62,32 @@ export default function Rooms() {
     const finalData = { ...data, imageUrl }
 
     if (editingRoom) {
-      await updateRoom(editingRoom.id, finalData)
-      toast({ title: 'Sala atualizada com sucesso.' })
+      const res = await updateRoom(editingRoom.id, finalData)
+      if (res.success) {
+        toast({ title: 'Sala atualizada com sucesso.' })
+        setDialogOpen(false)
+      } else {
+        toast({ title: 'Erro', description: res.error, variant: 'destructive' })
+      }
     } else {
-      await addRoom(finalData)
-      toast({ title: 'Sala criada com sucesso.' })
+      const res = await addRoom(finalData)
+      if (res.success) {
+        toast({ title: 'Sala criada com sucesso.' })
+        setDialogOpen(false)
+      } else {
+        toast({ title: 'Erro', description: res.error, variant: 'destructive' })
+      }
     }
-    setDialogOpen(false)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Atenção: Excluir esta sala removerá todas as reservas associadas. Continuar?')) {
-      deleteRoom(id)
-      toast({ title: 'Sala removida.' })
+      const res = await deleteRoom(id)
+      if (res.success) {
+        toast({ title: 'Sala removida.' })
+      } else {
+        toast({ title: 'Erro', description: res.error, variant: 'destructive' })
+      }
     }
   }
 

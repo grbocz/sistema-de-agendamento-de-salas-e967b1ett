@@ -32,7 +32,6 @@ import {
 import { ReservationsTable } from '@/components/reservations/ReservationsTable'
 import useAppStore from '@/stores/useAppStore'
 import { useToast } from '@/hooks/use-toast'
-import { supabase } from '@/lib/supabase/client'
 import { generateTimeOptions } from '@/lib/date-utils'
 import { Reservation } from '@/types'
 
@@ -47,7 +46,7 @@ const editSchema = z.object({
 type EditFormValues = z.infer<typeof editSchema>
 
 export default function Reservations() {
-  const { user, reservations, rooms, deleteReservation } = useAppStore()
+  const { user, reservations, rooms, updateReservation, deleteReservation } = useAppStore()
   const { toast } = useToast()
 
   const [filterRoom, setFilterRoom] = useState('all')
@@ -83,9 +82,13 @@ export default function Reservations() {
     })
   }, [reservations, filterRoom, filterDate, filterUser])
 
-  const handleDelete = (id: string) => {
-    deleteReservation(id)
-    toast({ title: 'Reserva cancelada', description: 'A reserva foi removida com sucesso.' })
+  const handleDelete = async (id: string) => {
+    const res = await deleteReservation(id)
+    if (res.success) {
+      toast({ title: 'Reserva cancelada', description: 'A reserva foi removida com sucesso.' })
+    } else {
+      toast({ title: 'Erro', description: res.error, variant: 'destructive' })
+    }
   }
 
   const form = useForm<EditFormValues>({
@@ -111,22 +114,19 @@ export default function Reservations() {
   const onSaveEdit = async (data: EditFormValues) => {
     if (!editingRes) return
 
-    const { error } = await supabase
-      .from('reservations')
-      .update({
-        date: data.date,
-        start_time: data.startTime,
-        duration_minutes: parseInt(data.duration, 10),
-        user_name: data.userName,
-        room_id: data.roomId,
-      })
-      .eq('id', editingRes.id)
+    const res = await updateReservation(editingRes.id, {
+      date: data.date,
+      startTime: data.startTime,
+      duration: parseInt(data.duration, 10),
+      userName: data.userName,
+      roomId: data.roomId,
+    })
 
-    if (!error) {
+    if (res.success) {
       toast({ title: 'Reserva atualizada com sucesso!' })
       setEditingRes(null)
     } else {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' })
+      toast({ title: 'Erro', description: res.error, variant: 'destructive' })
     }
   }
 

@@ -1,21 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { User, Room, Reservation } from '@/types'
 import { supabase } from '@/lib/supabase/client'
-import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 
 interface AppStore {
   user: User | null
-  login: (email: string) => void
   logout: () => Promise<void>
   rooms: Room[]
-  addRoom: (room: Omit<Room, 'id'>) => Promise<void>
-  updateRoom: (id: string, room: Partial<Room>) => Promise<void>
-  deleteRoom: (id: string) => Promise<void>
+  addRoom: (room: Omit<Room, 'id'>) => Promise<{ success: boolean; error?: string }>
+  updateRoom: (id: string, room: Partial<Room>) => Promise<{ success: boolean; error?: string }>
+  deleteRoom: (id: string) => Promise<{ success: boolean; error?: string }>
   reservations: Reservation[]
   addReservation: (res: Omit<Reservation, 'id'>) => Promise<{ success: boolean; error?: string }>
-  deleteReservation: (id: string) => Promise<void>
-  updateReservation: (id: string, data: any) => Promise<void>
+  deleteReservation: (id: string) => Promise<{ success: boolean; error?: string }>
+  updateReservation: (id: string, data: any) => Promise<{ success: boolean; error?: string }>
 }
 
 const AppContext = createContext<AppStore | null>(null)
@@ -24,13 +22,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth()
   const [rooms, setRooms] = useState<Room[]>([])
   const [reservations, setReservations] = useState<Reservation[]>([])
-  const { toast } = useToast()
 
   const fetchRooms = useCallback(async () => {
     const { data } = await supabase
       .from('rooms')
-      .select('*')
+      .select('id, name, capacity, description, color, image_url')
       .order('created_at', { ascending: true })
+
     if (data) {
       setRooms(
         data.map((r: any) => ({
@@ -46,7 +44,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const fetchReservations = useCallback(async () => {
-    const { data } = await supabase.from('reservations').select('*, profiles(name)')
+    const { data } = await supabase
+      .from('reservations')
+      .select(
+        'id, room_id, date, start_time, duration_minutes, user_id, user_name, status, profiles(name)',
+      )
+
     if (data) {
       setReservations(
         data.map((r: any) => ({
@@ -92,7 +95,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         color: room.color,
         image_url: room.imageUrl,
       })
-      .select()
+      .select('id, name, capacity, description, color, image_url')
       .single()
 
     if (data) {
@@ -107,9 +110,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           imageUrl: data.image_url,
         },
       ])
-    } else if (error) {
-      toast({ title: 'Erro ao criar sala', description: error.message, variant: 'destructive' })
+      return { success: true }
     }
+    return { success: false, error: error?.message }
   }
 
   const updateRoom = async (id: string, data: Partial<Room>) => {
@@ -123,18 +126,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.from('rooms').update(updateData).eq('id', id)
     if (!error) {
       setRooms((prev) => prev.map((r) => (r.id === id ? { ...r, ...data } : r)))
-    } else {
-      toast({ title: 'Erro ao atualizar sala', description: error.message, variant: 'destructive' })
+      return { success: true }
     }
+    return { success: false, error: error.message }
   }
 
   const deleteRoom = async (id: string) => {
     const { error } = await supabase.from('rooms').delete().eq('id', id)
     if (!error) {
       setRooms((prev) => prev.filter((r) => r.id !== id))
-    } else {
-      toast({ title: 'Erro ao deletar sala', description: error.message, variant: 'destructive' })
+      return { success: true }
     }
+    return { success: false, error: error.message }
   }
 
   const addReservation = async (res: Omit<Reservation, 'id'>) => {
@@ -175,11 +178,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateReservation = async (id: string, data: any) => {
     const updateData: any = {}
-    if (data.user_name || data.userName) updateData.user_name = data.user_name || data.userName
+    if (data.userName) updateData.user_name = data.userName
     if (data.date) updateData.date = data.date
     if (data.startTime) updateData.start_time = data.startTime
     if (data.duration) updateData.duration_minutes = data.duration
     if (data.status) updateData.status = data.status
+    if (data.roomId) updateData.room_id = data.roomId
 
     const { error } = await supabase.from('reservations').update(updateData).eq('id', id)
     if (!error) {
@@ -189,38 +193,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ? {
                 ...r,
                 ...data,
-                realUserName: data.user_name || data.userName || (r as any).realUserName,
+                roomId: data.roomId || r.roomId,
+                realUserName: data.userName || r.realUserName,
+                status: data.status || r.status,
               }
             : r,
         ),
       )
-      toast({ title: 'Reserva atualizada', description: 'As alterações foram salvas.' })
-    } else {
-      toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' })
+      return { success: true }
     }
+    return { success: false, error: error.message }
   }
 
   const deleteReservation = async (id: string) => {
     const { error } = await supabase.from('reservations').delete().eq('id', id)
     if (!error) {
       setReservations((prev) => prev.filter((r) => r.id !== id))
-    } else {
-      toast({
-        title: 'Erro ao cancelar reserva',
-        description: error.message,
-        variant: 'destructive',
-      })
+      return { success: true }
     }
+    return { success: false, error: error.message }
   }
 
-  const login = () => {}
   const logout = async () => {
     await signOut()
   }
 
   const store: AppStore = {
     user,
-    login,
     logout,
     rooms,
     addRoom,

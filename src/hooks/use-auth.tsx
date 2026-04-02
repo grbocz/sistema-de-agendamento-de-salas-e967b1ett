@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const handleProfile = (userId: string, email: string) => {
       supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, name, role')
         .eq('id', userId)
         .single()
         .then(({ data }) => {

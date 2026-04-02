@@ -5,13 +5,21 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppProvider } from '@/stores/useAppStore'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 
-import Index from './pages/Index'
-import Dashboard from './pages/Dashboard'
-import Reservations from './pages/Reservations'
-import Rooms from './pages/Rooms'
-import PendingReservations from './pages/PendingReservations'
-import NotFound from './pages/NotFound'
+import { lazy, Suspense } from 'react'
 import Layout from './components/Layout'
+
+const Index = lazy(() => import('./pages/Index'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Reservations = lazy(() => import('./pages/Reservations'))
+const Rooms = lazy(() => import('./pages/Rooms'))
+const PendingReservations = lazy(() => import('./pages/PendingReservations'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+)
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth()
@@ -41,18 +49,58 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
-            {/* Public / Login route */}
-            <Route path="/" element={<Index />} />
+            <Route
+              path="/"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Index />
+                </Suspense>
+              }
+            />
 
-            {/* Protected routes wrapped in Layout */}
             <Route element={<LayoutWrapper />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/reservas" element={<Reservations />} />
-              <Route path="/gerenciar-salas" element={<Rooms />} />
-              <Route path="/reservas-pendentes" element={<PendingReservations />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Dashboard />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/reservas"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Reservations />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/gerenciar-salas"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Rooms />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/reservas-pendentes"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PendingReservations />
+                  </Suspense>
+                }
+              />
             </Route>
 
-            <Route path="*" element={<NotFound />} />
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <NotFound />
+                </Suspense>
+              }
+            />
           </Routes>
         </TooltipProvider>
       </BrowserRouter>
