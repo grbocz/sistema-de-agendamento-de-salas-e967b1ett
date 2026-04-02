@@ -162,12 +162,7 @@ export default function Index() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Senha</Label>
-                    <Link to="/esqueci-senha" className="text-sm text-primary hover:underline">
-                      Esqueci minha senha
-                    </Link>
-                  </div>
+                  <Label htmlFor="password">Senha</Label>
                   <Input
                     id="password"
                     type="password"
@@ -191,11 +186,6 @@ export default function Index() {
                   >
                     <LogIn className="mr-2 h-4 w-4" /> Entrar
                   </Button>
-                  <div className="text-center text-sm">
-                    <Link to="/cadastro" className="text-primary hover:underline font-medium">
-                      Cadastrar novo administrador
-                    </Link>
-                  </div>
                 </div>
               </form>
             </TabsContent>
