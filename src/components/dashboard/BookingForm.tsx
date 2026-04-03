@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useSettings } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 
 import useAppStore from '@/stores/useAppStore'
@@ -35,6 +37,8 @@ const bookingSchema = z.object({
   userName: z.string().min(2, 'Informe o solicitante'),
   startTime: z.string().min(1, 'Selecione o horário inicial'),
   duration: z.string().min(1, 'Selecione a duração'),
+  pao_de_queijo: z.boolean().default(false).optional(),
+  cookie: z.boolean().default(false).optional(),
 })
 
 type BookingFormValues = z.infer<typeof bookingSchema>
@@ -49,6 +53,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
   const { user } = useAuth()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
+  const { showFoodOptions } = useSettings()
 
   const activeRoomId = selectedRoomId || searchParams.get('roomId') || ''
 
@@ -63,6 +68,8 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       userName: defaultUserName,
       startTime: '09:00',
       duration: '60',
+      pao_de_queijo: false,
+      cookie: false,
     },
   })
 
@@ -89,6 +96,8 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       userId: user.id,
       userName: data.userName,
       user_name: data.userName,
+      pao_de_queijo: data.pao_de_queijo,
+      cookie: data.cookie,
     } as any)
 
     if (resResult.success) {
@@ -214,8 +223,42 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
                 )}
               />
             </div>
+
+            {showFoodOptions && (
+              <div className="flex gap-6 p-4 rounded-lg bg-muted/30 border border-border/50 animate-fade-in">
+                <FormField
+                  control={form.control}
+                  name="pao_de_queijo"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="cursor-pointer">Pão de Queijo</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cookie"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="cursor-pointer">Cookie</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter>
+            {' '}
             <Button type="submit" className="w-full">
               Agendar Sala
             </Button>

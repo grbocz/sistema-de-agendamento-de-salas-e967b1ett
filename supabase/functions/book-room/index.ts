@@ -21,6 +21,8 @@ Deno.serve(async (req: Request) => {
     const start_time = body.start_time || body.startTime
     const duration_minutes = body.duration_minutes || body.duration
     const user_name = body.user_name || body.userName
+    const pao_de_queijo = body.pao_de_queijo || false
+    const cookie = body.cookie || false
 
     const {
       data: { user },
@@ -81,6 +83,8 @@ Deno.serve(async (req: Request) => {
         duration_minutes: parseInt(duration_minutes, 10),
         user_name: finalUserName,
         status,
+        pao_de_queijo,
+        cookie,
       })
       .select('*, profiles(name)')
       .single()

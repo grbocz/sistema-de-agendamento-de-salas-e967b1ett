@@ -3,6 +3,9 @@ import { Navigate } from 'react-router-dom'
 import { Edit, Plus, Trash2, Users } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { useSettings } from '@/hooks/use-settings'
 import { supabase } from '@/lib/supabase/client'
 import {
   Table,
@@ -23,6 +26,7 @@ export default function Rooms() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+  const { showFoodOptions, toggleFoodOptions } = useSettings()
 
   const sortedRooms = useMemo(() => {
     return [...rooms].sort((a, b) => a.name.localeCompare(b.name))
@@ -110,9 +114,21 @@ export default function Rooms() {
             Adicione, edite ou remova as salas do sistema.
           </p>
         </div>
-        <Button onClick={openNew}>
-          <Plus className="mr-2 h-4 w-4" /> Nova Sala
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50">
+            <Switch
+              id="food-toggle"
+              checked={showFoodOptions}
+              onCheckedChange={toggleFoodOptions}
+            />
+            <Label htmlFor="food-toggle" className="cursor-pointer text-sm font-medium">
+              Opções de Lanche
+            </Label>
+          </div>
+          <Button onClick={openNew}>
+            <Plus className="mr-2 h-4 w-4" /> Nova Sala
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border bg-white shadow-subtle overflow-hidden">
