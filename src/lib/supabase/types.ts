@@ -9,6 +9,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -38,10 +53,12 @@ export type Database = {
       }
       reservations: {
         Row: {
+          cookie: boolean
           created_at: string
           date: string
           duration_minutes: number
           id: string
+          pao_de_queijo: boolean
           room_id: string
           start_time: string
           status: string
@@ -49,10 +66,12 @@ export type Database = {
           user_name: string | null
         }
         Insert: {
+          cookie?: boolean
           created_at?: string
           date: string
           duration_minutes: number
           id?: string
+          pao_de_queijo?: boolean
           room_id: string
           start_time: string
           status?: string
@@ -60,10 +79,12 @@ export type Database = {
           user_name?: string | null
         }
         Update: {
+          cookie?: boolean
           created_at?: string
           date?: string
           duration_minutes?: number
           id?: string
+          pao_de_queijo?: boolean
           room_id?: string
           start_time?: string
           status?: string
@@ -264,6 +285,9 @@ export const Constants = {
 // --- COLUMN TYPES (actual PostgreSQL types) ---
 // Use this to know the real database type when writing migrations.
 // "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: app_settings
+//   key: text (not null)
+//   value: jsonb (not null)
 // Table: profiles
 //   id: uuid (not null)
 //   email: text (not null)
@@ -281,6 +305,8 @@ export const Constants = {
 //   created_at: timestamp with time zone (not null, default: now())
 //   user_name: text (nullable)
 //   status: text (not null, default: 'pendente'::text)
+//   pao_de_queijo: boolean (not null, default: false)
+//   cookie: boolean (not null, default: false)
 // Table: rooms
 //   id: uuid (not null, default: gen_random_uuid())
 //   name: text (not null)
@@ -291,6 +317,8 @@ export const Constants = {
 //   created_at: timestamp with time zone (not null, default: now())
 
 // --- CONSTRAINTS ---
+// Table: app_settings
+//   PRIMARY KEY app_settings_pkey: PRIMARY KEY (key)
 // Table: profiles
 //   FOREIGN KEY profiles_id_fkey: FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
 //   PRIMARY KEY profiles_pkey: PRIMARY KEY (id)
@@ -303,6 +331,12 @@ export const Constants = {
 //   PRIMARY KEY rooms_pkey: PRIMARY KEY (id)
 
 // --- ROW LEVEL SECURITY POLICIES ---
+// Table: app_settings
+//   Policy "Master can modify settings" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'master'::text))))
+//     WITH CHECK: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'master'::text))))
+//   Policy "Settings visible to authenticated" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
 // Table: profiles
 //   Policy "Profiles visible to authenticated" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true

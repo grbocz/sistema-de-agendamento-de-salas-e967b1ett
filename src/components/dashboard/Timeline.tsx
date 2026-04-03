@@ -42,7 +42,7 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
         <div className="flex flex-col gap-1">
           <CardTitle className="text-lg font-medium flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            Agenda: {format(date, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+            Agenda: {format(date, 'dd-MMMM-yyyy', { locale: ptBR })}
           </CardTitle>
         </div>
         {selectedRoom && (

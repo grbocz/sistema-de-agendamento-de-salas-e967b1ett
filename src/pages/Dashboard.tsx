@@ -43,8 +43,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
-        <div className="flex flex-col xl:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col xl:flex-row gap-6 flex-1 w-full max-w-[1050px]">
           <div className="flex flex-col gap-6 shrink-0 w-full xl:w-[320px]">
             <Card className="p-4 shadow-subtle h-fit flex justify-center w-full mx-auto">
               <Calendar
@@ -121,7 +121,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="sticky top-24">
+        <div className="sticky top-24 w-full lg:w-[380px] shrink-0">
           <BookingForm selectedDate={date} selectedRoomId={selectedRoomId || undefined} />
         </div>
       </div>
