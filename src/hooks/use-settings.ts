@@ -68,7 +68,7 @@ export function useSettings() {
       })
     } else {
       toast({
-        title: val ? 'Opções de lanche ativadas' : 'Opções de lanche desativadas',
+        title: val ? 'Mostrar Extras ativado' : 'Mostrar Extras desativado',
       })
     }
   }
