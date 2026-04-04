@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { format } from 'date-fns'
 
 export default function Reservations() {
   const [reservations, setReservations] = useState<any[]>([])
@@ -34,6 +35,7 @@ export default function Reservations() {
   const [filterRoom, setFilterRoom] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterDate, setFilterDate] = useState('')
+  const [showPast, setShowPast] = useState(false)
 
   const [editingRes, setEditingRes] = useState<any | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -195,14 +197,24 @@ export default function Reservations() {
     }
   }
 
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+
   const filteredReservations = reservations.filter((res) => {
     const userName = (res.realUserName || res.userName || '').toLowerCase()
     const matchesSearch = searchTerm === '' || userName.includes(searchTerm.toLowerCase())
     const matchesRoom = filterRoom === 'all' || res.roomId === filterRoom
     const matchesStatus = filterStatus === 'all' || res.status === filterStatus
     const matchesDate = filterDate === '' || res.date === filterDate
-    return matchesSearch && matchesRoom && matchesStatus && matchesDate
+    const matchesPast = showPast || res.date >= todayStr
+    return matchesSearch && matchesRoom && matchesStatus && matchesDate && matchesPast
   })
+
+  const hasFilters =
+    searchTerm !== '' ||
+    filterRoom !== 'all' ||
+    filterStatus !== 'all' ||
+    filterDate !== '' ||
+    showPast !== false
 
   if (loading) {
     return (
@@ -277,23 +289,30 @@ export default function Reservations() {
             </SelectContent>
           </Select>
         </div>
-        {(searchTerm !== '' ||
-          filterRoom !== 'all' ||
-          filterStatus !== 'all' ||
-          filterDate !== '') && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSearchTerm('')
-              setFilterRoom('all')
-              setFilterStatus('all')
-              setFilterDate('')
-            }}
-            className="w-full sm:w-auto text-muted-foreground"
-          >
-            Limpar
-          </Button>
-        )}
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Checkbox
+            id="show-past"
+            checked={showPast}
+            onCheckedChange={(checked) => setShowPast(checked === true)}
+          />
+          <Label htmlFor="show-past" className="font-normal cursor-pointer whitespace-nowrap">
+            Ver passadas
+          </Label>
+        </div>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setSearchTerm('')
+            setFilterRoom('all')
+            setFilterStatus('all')
+            setFilterDate('')
+            setShowPast(false)
+          }}
+          disabled={!hasFilters}
+          className="w-full sm:w-auto text-muted-foreground"
+        >
+          Limpar
+        </Button>
       </div>
 
       <ReservationsTable
