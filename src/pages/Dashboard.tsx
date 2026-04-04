@@ -36,13 +36,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Gerencie e visualize as reservas das salas.</p>
-        </div>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <div className="flex flex-col xl:flex-row gap-6 flex-1 w-full max-w-[1050px]">
           <div className="flex flex-col gap-6 shrink-0 w-full xl:w-[320px]">
