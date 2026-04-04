@@ -122,7 +122,7 @@ export default function Rooms() {
               onCheckedChange={toggleFoodOptions}
             />
             <Label htmlFor="food-toggle" className="cursor-pointer text-sm font-medium">
-              Opções de Lanche
+              Mostrar Extras
             </Label>
           </div>
           <Button onClick={openNew}>
