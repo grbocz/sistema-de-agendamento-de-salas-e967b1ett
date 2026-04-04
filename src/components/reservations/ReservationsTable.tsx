@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { Trash2, Edit2, ArrowUpDown, ArrowUp, ArrowDown, Check } from 'lucide-react'
 
+import { supabase } from '@/lib/supabase/client'
 import {
   Table,
   TableBody,
@@ -29,6 +30,33 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(
     null,
   )
+  const [extras, setExtras] = useState<Record<string, { pao_de_queijo: boolean; cookie: boolean }>>(
+    {},
+  )
+
+  useEffect(() => {
+    const fetchExtras = async () => {
+      if (!reservations?.length) return
+
+      const ids = reservations.map((r) => r.id)
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('id, pao_de_queijo, cookie')
+        .in('id', ids)
+
+      if (!error && data) {
+        const map: Record<string, { pao_de_queijo: boolean; cookie: boolean }> = {}
+        data.forEach((d) => {
+          map[d.id] = {
+            pao_de_queijo: !!d.pao_de_queijo,
+            cookie: !!d.cookie,
+          }
+        })
+        setExtras(map)
+      }
+    }
+    fetchExtras()
+  }, [reservations])
 
   const sortedReservations = useMemo(() => {
     let sortable = [...reservations]
@@ -198,19 +226,32 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                 </TableCell>
                 <TableCell className="text-sm">
                   <div className="flex flex-col gap-1">
-                    {(res as any).pao_de_queijo ? (
-                      <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
-                        <Check className="h-3.5 w-3.5 text-green-600" /> Pão de Queijo
-                      </span>
-                    ) : null}
-                    {(res as any).cookie ? (
-                      <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
-                        <Check className="h-3.5 w-3.5 text-green-600" /> Cookie
-                      </span>
-                    ) : null}
-                    {!(res as any).pao_de_queijo && !(res as any).cookie && (
-                      <span className="text-muted-foreground/50">-</span>
-                    )}
+                    {(() => {
+                      const hasPao =
+                        extras[res.id]?.pao_de_queijo ??
+                        (res as any).pao_de_queijo ??
+                        (res as any).paoDeQueijo ??
+                        false
+                      const hasCookie = extras[res.id]?.cookie ?? (res as any).cookie ?? false
+
+                      return (
+                        <>
+                          {hasPao ? (
+                            <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
+                              <Check className="h-3.5 w-3.5 text-green-600" /> Pão de Queijo
+                            </span>
+                          ) : null}
+                          {hasCookie ? (
+                            <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
+                              <Check className="h-3.5 w-3.5 text-green-600" /> Cookie
+                            </span>
+                          ) : null}
+                          {!hasPao && !hasCookie && (
+                            <span className="text-muted-foreground/50">-</span>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </TableCell>
                 {isMaster && (
