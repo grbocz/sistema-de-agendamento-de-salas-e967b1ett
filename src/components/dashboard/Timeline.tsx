@@ -75,14 +75,12 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
               const isPending = res.status === 'pendente'
 
               const userName = (res as any).realUserName || (res as any).user_name || res.userName
-              const isShort = res.duration <= 30
 
               return (
                 <div
                   key={res.id}
                   className={cn(
-                    'absolute left-2 right-2 rounded-md border px-3 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group flex justify-center',
-                    isShort ? 'py-0.5 flex-row items-center justify-start' : 'py-1 flex-col',
+                    'absolute left-2 right-2 rounded-md border px-3 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group flex flex-row items-start justify-start pt-1',
                     isPending && 'opacity-50 border-dashed border-2',
                   )}
                   style={{
@@ -92,32 +90,18 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
                     borderColor: isPending ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
                   }}
                 >
-                  {isShort ? (
-                    <div className="flex items-center gap-1.5 w-full opacity-90 group-hover:opacity-100 leading-none overflow-hidden">
-                      <span className="font-bold whitespace-nowrap">
-                        {res.startTime} - {endTime}
+                  <div className="flex items-center gap-1.5 w-full opacity-90 group-hover:opacity-100 leading-none overflow-hidden mt-0.5">
+                    <span className="font-bold whitespace-nowrap">
+                      {res.startTime} - {endTime}
+                    </span>
+                    <span className="opacity-75 shrink-0">|</span>
+                    <span className="font-medium truncate flex-1">{userName}</span>
+                    {room?.name && (
+                      <span className="truncate shrink-0 max-w-[30%] text-right font-bold ml-1">
+                        {room.name}
                       </span>
-                      <span className="opacity-75 shrink-0">|</span>
-                      <span className="font-medium truncate flex-1">{userName}</span>
-                      {room?.name && (
-                        <span className="truncate shrink-0 max-w-[30%] text-right font-bold ml-1">
-                          {room.name}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="font-bold flex justify-between items-center opacity-90 group-hover:opacity-100 leading-tight">
-                        <span>
-                          {res.startTime} - {endTime}
-                        </span>
-                        <span className="truncate max-w-[50%] text-right">{room?.name}</span>
-                      </div>
-                      <div className="mt-0.5 font-medium truncate opacity-90 leading-tight">
-                        {userName}
-                      </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               )
             })}
