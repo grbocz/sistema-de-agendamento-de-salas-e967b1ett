@@ -25,4 +25,6 @@ export interface Reservation {
   userId: string
   userName: string
   status?: 'pendente' | 'aprovada' | 'reprovada'
+  pao_de_queijo?: boolean
+  cookie?: boolean
 }

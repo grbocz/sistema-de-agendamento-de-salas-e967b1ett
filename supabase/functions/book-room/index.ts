@@ -55,9 +55,9 @@ Deno.serve(async (req: Request) => {
 
     if (hasConflict) {
       return new Response(
-        JSON.stringify({ error: 'Horário indisponível - Reserva não realizada' }),
+        JSON.stringify({ success: false, error: 'Horário indisponível - Reserva não realizada' }),
         {
-          status: 400,
+          status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         },
       )
@@ -65,11 +65,21 @@ Deno.serve(async (req: Request) => {
 
     const finalUserName = user_name || user.user_metadata?.name || 'Solicitante'
 
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
+
+    if (!profile) {
+      await supabase.from('profiles').insert({
+        id: user.id,
+        email: user.email || `${user.id}@placeholder.com`,
+        name: finalUserName,
+        role: 'generico',
+      })
+      profile = { role: 'generico' }
+    }
 
     const status = profile?.role === 'master' ? 'aprovada' : 'pendente'
 
@@ -95,8 +105,8 @@ Deno.serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 400,
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     })
   }

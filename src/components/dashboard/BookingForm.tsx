@@ -49,7 +49,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) {
-  const { rooms, addReservation } = useAppStore()
+  const { rooms } = useAppStore()
   const { user } = useAuth()
   const { toast } = useToast()
   const [searchParams] = useSearchParams()
@@ -88,17 +88,35 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
   const onSubmit = async (data: BookingFormValues) => {
     if (!user) return
 
-    const resResult = await addReservation({
-      roomId: data.roomId,
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      startTime: data.startTime,
-      duration: parseInt(data.duration, 10),
-      userId: user.id,
-      userName: data.userName,
-      user_name: data.userName,
-      pao_de_queijo: data.pao_de_queijo,
-      cookie: data.cookie,
-    } as any)
+    let resResult: any = { success: false }
+    try {
+      const { data: invokeData, error } = await supabase.functions.invoke('book-room', {
+        body: {
+          roomId: data.roomId,
+          room_id: data.roomId,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+          startTime: data.startTime,
+          start_time: data.startTime,
+          duration: parseInt(data.duration, 10),
+          duration_minutes: parseInt(data.duration, 10),
+          userId: user.id,
+          userName: data.userName,
+          user_name: data.userName,
+          pao_de_queijo: data.pao_de_queijo || false,
+          cookie: data.cookie || false,
+        },
+      })
+
+      if (error) {
+        resResult = { success: false, error: error.message }
+      } else if (invokeData?.success === false) {
+        resResult = { success: false, error: invokeData.error }
+      } else {
+        resResult = { success: true, data: invokeData?.data }
+      }
+    } catch (err: any) {
+      resResult = { success: false, error: err.message }
+    }
 
     if (resResult.success) {
       toast({
@@ -107,6 +125,10 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
         variant: 'default',
       })
       form.reset({ ...data, startTime: '' })
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } else {
       console.error('Erro detalhado da reserva:', resResult)
 
