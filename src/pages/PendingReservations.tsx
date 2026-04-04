@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Check, X, ClipboardList } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -85,18 +85,6 @@ export default function PendingReservations() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <ClipboardList className="h-8 w-8 text-primary" />
-            Reservas Pendentes
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Aprove ou reprove solicitações de reserva de salas.
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Aguardando Aprovação</CardTitle>

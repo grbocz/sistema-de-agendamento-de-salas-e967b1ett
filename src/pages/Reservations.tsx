@@ -226,10 +226,6 @@ export default function Reservations() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Lista de Reservas</h1>
-      </div>
-
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border shadow-sm flex-wrap items-center">
         <div className="flex-1 min-w-[200px] w-full relative">
           <svg
