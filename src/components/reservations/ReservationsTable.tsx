@@ -26,6 +26,13 @@ interface Props {
 
 type SortKey = 'room' | 'date' | 'time' | 'duration' | 'user' | 'status'
 
+const formatTime = (time: string) => {
+  if (!time) return ''
+  const parts = time.split(':')
+  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`
+  return time
+}
+
 export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMaster }: Props) {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(
     null,
@@ -190,7 +197,7 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                 </TableCell>
                 <TableCell>{format(parseISO(res.date), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>
-                  {res.startTime} - {endTime}
+                  {formatTime(res.startTime)} - {formatTime(endTime)}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="font-normal">
