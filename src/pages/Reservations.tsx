@@ -33,6 +33,7 @@ export default function Reservations() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRoom, setFilterRoom] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterDate, setFilterDate] = useState('')
 
   const [editingRes, setEditingRes] = useState<any | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -199,7 +200,8 @@ export default function Reservations() {
     const matchesSearch = searchTerm === '' || userName.includes(searchTerm.toLowerCase())
     const matchesRoom = filterRoom === 'all' || res.roomId === filterRoom
     const matchesStatus = filterStatus === 'all' || res.status === filterStatus
-    return matchesSearch && matchesRoom && matchesStatus
+    const matchesDate = filterDate === '' || res.date === filterDate
+    return matchesSearch && matchesRoom && matchesStatus && matchesDate
   })
 
   if (loading) {
@@ -216,8 +218,8 @@ export default function Reservations() {
         <h1 className="text-3xl font-bold tracking-tight">Lista de Reservas</h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border shadow-sm">
-        <div className="flex-1 relative">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border shadow-sm flex-wrap items-center">
+        <div className="flex-1 min-w-[200px] w-full relative">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
@@ -239,7 +241,15 @@ export default function Reservations() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="w-full sm:w-[200px]">
+        <div className="w-full sm:w-auto">
+          <Input
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <div className="w-full sm:w-[160px]">
           <Select value={filterRoom} onValueChange={setFilterRoom}>
             <SelectTrigger>
               <SelectValue placeholder="Todas as salas" />
@@ -254,7 +264,7 @@ export default function Reservations() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-full sm:w-[200px]">
+        <div className="w-full sm:w-[160px]">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger>
               <SelectValue placeholder="Todos os status" />
@@ -267,6 +277,23 @@ export default function Reservations() {
             </SelectContent>
           </Select>
         </div>
+        {(searchTerm !== '' ||
+          filterRoom !== 'all' ||
+          filterStatus !== 'all' ||
+          filterDate !== '') && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSearchTerm('')
+              setFilterRoom('all')
+              setFilterStatus('all')
+              setFilterDate('')
+            }}
+            className="w-full sm:w-auto text-muted-foreground"
+          >
+            Limpar
+          </Button>
+        )}
       </div>
 
       <ReservationsTable
