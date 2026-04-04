@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { format } from 'date-fns'
+import { format, isBefore, startOfDay } from 'date-fns'
 import { useSearchParams } from 'react-router-dom'
 
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,16 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useSettings } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 
@@ -55,6 +65,9 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
   const [searchParams] = useSearchParams()
   const { showFoodOptions } = useSettings()
 
+  const [showPastDateAlert, setShowPastDateAlert] = useState(false)
+  const [pendingData, setPendingData] = useState<BookingFormValues | null>(null)
+
   const activeRoomId = selectedRoomId || searchParams.get('roomId') || ''
 
   const isGenericName =
@@ -85,7 +98,7 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
     }
   }, [activeRoomId, form])
 
-  const onSubmit = async (data: BookingFormValues) => {
+  const executeBooking = async (data: BookingFormValues) => {
     if (!user) return
 
     let resResult: any = { success: false }
@@ -147,6 +160,34 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
         variant: 'destructive',
       })
     }
+  }
+
+  const onSubmit = async (data: BookingFormValues) => {
+    if (!user) return
+
+    const today = startOfDay(new Date())
+    const reservationDate = startOfDay(selectedDate)
+
+    if (isBefore(reservationDate, today)) {
+      setPendingData(data)
+      setShowPastDateAlert(true)
+      return
+    }
+
+    await executeBooking(data)
+  }
+
+  const handleConfirmPastDate = async () => {
+    setShowPastDateAlert(false)
+    if (pendingData) {
+      await executeBooking(pendingData)
+      setPendingData(null)
+    }
+  }
+
+  const handleCancelPastDate = () => {
+    setShowPastDateAlert(false)
+    setPendingData(null)
   }
 
   const timeOptions = generateTimeOptions()
@@ -298,6 +339,23 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
           </CardFooter>
         </form>
       </Form>
+
+      <AlertDialog open={showPastDateAlert} onOpenChange={setShowPastDateAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Atenção: Data Retroativa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está tentando agendar uma sala para uma data anterior ao dia de hoje (
+              {format(selectedDate, 'dd/MM/yyyy')}). Deseja realmente prosseguir com este registro
+              retroativo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelPastDate}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPastDate}>Confirmar Reserva</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
