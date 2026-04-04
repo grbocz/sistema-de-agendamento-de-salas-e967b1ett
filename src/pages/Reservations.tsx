@@ -225,7 +225,7 @@ export default function Reservations() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="px-4 sm:px-6 pb-6 pt-1 max-w-7xl mx-auto space-y-4 animate-fade-in">
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border shadow-sm flex-wrap items-center">
         <div className="flex-1 min-w-[200px] w-full relative">
           <svg
