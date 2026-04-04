@@ -30,6 +30,10 @@ export default function Reservations() {
   const { user } = useAuth()
   const [isMaster, setIsMaster] = useState(false)
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterRoom, setFilterRoom] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+
   const [editingRes, setEditingRes] = useState<any | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -190,6 +194,14 @@ export default function Reservations() {
     }
   }
 
+  const filteredReservations = reservations.filter((res) => {
+    const userName = (res.realUserName || res.userName || '').toLowerCase()
+    const matchesSearch = searchTerm === '' || userName.includes(searchTerm.toLowerCase())
+    const matchesRoom = filterRoom === 'all' || res.roomId === filterRoom
+    const matchesStatus = filterStatus === 'all' || res.status === filterStatus
+    return matchesSearch && matchesRoom && matchesStatus
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -204,8 +216,61 @@ export default function Reservations() {
         <h1 className="text-3xl font-bold tracking-tight">Lista de Reservas</h1>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border shadow-sm">
+        <div className="flex-1 relative">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <Input
+            placeholder="Buscar por solicitante..."
+            className="pl-9"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-[200px]">
+          <Select value={filterRoom} onValueChange={setFilterRoom}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas as salas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as salas</SelectItem>
+              {rooms.map((room) => (
+                <SelectItem key={room.id} value={room.id}>
+                  {room.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full sm:w-[200px]">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todos os status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="aprovada">Aprovada</SelectItem>
+              <SelectItem value="reprovada">Reprovada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <ReservationsTable
-        reservations={reservations}
+        reservations={filteredReservations}
         rooms={rooms}
         onDelete={handleDelete}
         onEdit={handleEditClick}
