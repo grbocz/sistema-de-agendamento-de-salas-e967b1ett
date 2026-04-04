@@ -123,9 +123,9 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
   }
 
   return (
-    <div className="rounded-md border bg-white shadow-subtle overflow-hidden">
+    <div className="rounded-md border bg-white shadow-subtle overflow-hidden [&>div]:max-h-[calc(100vh-220px)] [&>div]:overflow-auto">
       <Table>
-        <TableHeader className="bg-muted/30">
+        <TableHeader className="bg-white/95 backdrop-blur-sm sticky top-0 z-20 shadow-[0_1px_3px_0_rgba(0,0,0,0.08)]">
           <TableRow>
             <TableHead
               className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
