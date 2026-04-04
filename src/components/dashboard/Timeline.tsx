@@ -16,7 +16,7 @@ interface TimelineProps {
 
 const START_HOUR = 7
 const END_HOUR = 21
-const PIXELS_PER_HOUR = 60
+const PIXELS_PER_HOUR = 44
 
 export function Timeline({ date, reservations, rooms, selectedRoomId }: TimelineProps) {
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -55,8 +55,8 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
         <div className="h-[600px] overflow-y-auto relative bg-slate-50/50">
           {/* Background Grid */}
           {hours.map((h) => (
-            <div key={h} className="flex h-[60px] border-b border-border/50">
-              <div className="w-16 text-xs text-muted-foreground p-2 border-r border-border/50 text-right bg-white select-none">
+            <div key={h} className="flex h-[44px] border-b border-border/50">
+              <div className="w-16 text-xs text-muted-foreground p-1.5 border-r border-border/50 text-right bg-white select-none">
                 {h.toString().padStart(2, '0')}:00
               </div>
               <div className="flex-1 bg-white" />
@@ -78,7 +78,7 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
                 <div
                   key={res.id}
                   className={cn(
-                    'absolute left-2 right-2 rounded-md border px-3 py-1.5 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group',
+                    'absolute left-2 right-2 rounded-md border px-3 py-1 text-xs text-white overflow-hidden pointer-events-auto shadow-sm transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 group flex flex-col justify-center',
                     isPending && 'opacity-50 border-dashed border-2',
                   )}
                   style={{
@@ -88,13 +88,13 @@ export function Timeline({ date, reservations, rooms, selectedRoomId }: Timeline
                     borderColor: isPending ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)',
                   }}
                 >
-                  <div className="font-bold flex justify-between items-center opacity-90 group-hover:opacity-100">
+                  <div className="font-bold flex justify-between items-center opacity-90 group-hover:opacity-100 leading-tight">
                     <span>
                       {res.startTime} - {endTime}
                     </span>
                     <span className="truncate max-w-[50%] text-right">{room?.name}</span>
                   </div>
-                  <div className="mt-1 font-medium truncate opacity-90">
+                  <div className="mt-0.5 font-medium truncate opacity-90 leading-tight">
                     {(res as any).realUserName || (res as any).user_name || res.userName}
                   </div>
                 </div>
