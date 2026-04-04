@@ -83,7 +83,7 @@ export default function PendingReservations() {
   }
 
   return (
-    <div className="px-4 sm:px-6 pb-6 pt-1 max-w-7xl mx-auto space-y-4 animate-fade-in">
+    <div className="px-4 sm:px-6 pb-6 max-w-7xl mx-auto space-y-4 animate-fade-in">
       {pendingReservations.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground bg-white rounded-lg border border-dashed shadow-sm">
           Nenhuma reserva pendente de aprovação.

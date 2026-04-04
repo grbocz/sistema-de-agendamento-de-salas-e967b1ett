@@ -13,7 +13,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       <Header />
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container pb-8 pt-4">
         <div className="page-transition">
           <Outlet />
         </div>
