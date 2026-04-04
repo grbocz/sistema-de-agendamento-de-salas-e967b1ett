@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { ReservationsTable } from '@/components/reservations/ReservationsTable'
-import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/use-auth'
 import {
   Dialog,
   DialogContent,
@@ -21,121 +21,127 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Reservation, Room } from '@/types'
 
 export default function Reservations() {
-  const { user } = useAuth()
-  const { toast } = useToast()
-
-  const [reservations, setReservations] = useState<Reservation[]>([])
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [isMaster, setIsMaster] = useState(false)
+  const [reservations, setReservations] = useState<any[]>([])
+  const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const [isMaster, setIsMaster] = useState(false)
 
-  const [editingRes, setEditingRes] = useState<Reservation | null>(null)
+  const [editingRes, setEditingRes] = useState<any | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Edit form state
   const [editDate, setEditDate] = useState('')
   const [editStartTime, setEditStartTime] = useState('')
-  const [editDuration, setEditDuration] = useState('60')
-  const [editPao, setEditPao] = useState(false)
+  const [editDuration, setEditDuration] = useState('')
+  const [editRoomId, setEditRoomId] = useState('')
+  const [editPaoDeQueijo, setEditPaoDeQueijo] = useState(false)
   const [editCookie, setEditCookie] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const fetchData = async () => {
-    if (!user) return
+  const fetchRooms = async () => {
+    const { data } = await supabase.from('rooms').select('*').order('name')
+    if (data) setRooms(data)
+  }
 
-    setLoading(true)
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const userIsMaster = profile?.role === 'master'
-    setIsMaster(userIsMaster)
-
-    const { data: roomsData } = await supabase.from('rooms').select('*')
-    if (roomsData) {
-      setRooms(
-        roomsData.map((r) => ({
-          id: r.id,
-          name: r.name,
-          color: r.color,
-          capacity: r.capacity,
-          description: r.description,
-        })) as Room[],
-      )
-    }
-
-    let query = supabase
+  const fetchReservations = async () => {
+    const { data, error } = await supabase
       .from('reservations')
       .select('*, profiles(name)')
       .order('date', { ascending: false })
       .order('start_time', { ascending: false })
 
-    if (!userIsMaster) {
-      query = query.eq('user_id', user.id)
+    if (error) {
+      toast({
+        title: 'Erro ao buscar reservas',
+        description: error.message,
+        variant: 'destructive',
+      })
+      return
     }
 
-    const { data: resData } = await query
-
-    if (resData) {
-      setReservations(
-        resData.map((r) => ({
-          id: r.id,
-          roomId: r.room_id,
-          userId: r.user_id,
-          date: r.date,
-          startTime: r.start_time,
-          duration: r.duration_minutes,
-          userName: r.profiles?.name || r.user_name || 'Desconhecido',
-          status: r.status,
-          pao_de_queijo: r.pao_de_queijo,
-          cookie: r.cookie,
-        })) as unknown as Reservation[],
-      )
+    if (data) {
+      const formatted = data.map((d: any) => ({
+        id: d.id,
+        roomId: d.room_id,
+        userId: d.user_id,
+        date: d.date,
+        startTime: d.start_time,
+        duration: d.duration_minutes,
+        userName: d.user_name || d.profiles?.name,
+        status: d.status,
+        pao_de_queijo: d.pao_de_queijo,
+        cookie: d.cookie,
+      }))
+      setReservations(formatted)
     }
+  }
 
-    setLoading(false)
+  const fetchProfile = async () => {
+    if (!user) return
+    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (data && data.role === 'master') {
+      setIsMaster(true)
+    }
   }
 
   useEffect(() => {
-    fetchData()
+    setLoading(true)
+    Promise.all([fetchRooms(), fetchReservations(), fetchProfile()]).finally(() => {
+      setLoading(false)
+    })
   }, [user])
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('reservations').delete().eq('id', id)
     if (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível cancelar a reserva.',
-        variant: 'destructive',
-      })
+      toast({ title: 'Erro ao cancelar', description: error.message, variant: 'destructive' })
     } else {
-      toast({ title: 'Sucesso', description: 'Reserva cancelada.' })
-      fetchData()
+      toast({ title: 'Reserva cancelada' })
+      setReservations((prev) => prev.filter((r) => r.id !== id))
     }
   }
 
-  const handleEdit = (res: any) => {
+  const handleEditClick = (res: any) => {
     setEditingRes(res)
     setEditDate(res.date)
-
-    const timeParts = res.startTime.split(':')
-    setEditStartTime(`${timeParts[0]}:${timeParts[1]}`)
-
-    setEditDuration(res.duration.toString())
-    setEditPao(res.pao_de_queijo || false)
+    setEditStartTime(res.startTime)
+    setEditDuration(res.duration?.toString() || '60')
+    setEditRoomId(res.roomId)
+    setEditPaoDeQueijo(res.pao_de_queijo || false)
     setEditCookie(res.cookie || false)
+    setIsDialogOpen(true)
   }
 
-  const saveEdit = async () => {
+  const handleUpdate = async () => {
     if (!editingRes) return
+
+    if (!editRoomId) {
+      toast({
+        title: 'Sala obrigatória',
+        description: 'Por favor, selecione uma sala.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setIsSaving(true)
 
     try {
+      // Validate availability for the selected room (excluding current reservation)
+      const { data: existingReservations, error: fetchError } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('room_id', editRoomId)
+        .eq('date', editDate)
+        .in('status', ['aprovada', 'pendente'])
+        .neq('id', editingRes.id)
+
+      if (fetchError) throw fetchError
+
       const parseTime = (timeStr: string) => {
         const [h, m] = timeStr.split(':').map(Number)
         return h * 60 + m
@@ -143,16 +149,6 @@ export default function Reservations() {
 
       const newStart = parseTime(editStartTime)
       const newEnd = newStart + parseInt(editDuration, 10)
-
-      const { data: existingReservations, error: fetchError } = await supabase
-        .from('reservations')
-        .select('*')
-        .eq('room_id', editingRes.roomId)
-        .eq('date', editDate)
-        .in('status', ['aprovada', 'pendente'])
-        .neq('id', editingRes.id)
-
-      if (fetchError) throw fetchError
 
       const hasConflict = existingReservations?.some((res: any) => {
         const exStart = parseTime(res.start_time)
@@ -162,8 +158,8 @@ export default function Reservations() {
 
       if (hasConflict) {
         toast({
-          title: 'Horário Indisponível',
-          description: 'Já existe uma reserva para este horário.',
+          title: 'Horário indisponível',
+          description: 'Já existe uma reserva pendente ou aprovada para esta sala neste horário.',
           variant: 'destructive',
         })
         setIsSaving(false)
@@ -176,89 +172,91 @@ export default function Reservations() {
           date: editDate,
           start_time: editStartTime,
           duration_minutes: parseInt(editDuration, 10),
-          pao_de_queijo: editPao,
+          room_id: editRoomId,
+          pao_de_queijo: editPaoDeQueijo,
           cookie: editCookie,
         })
         .eq('id', editingRes.id)
 
       if (error) throw error
 
-      toast({ title: 'Sucesso', description: 'Reserva atualizada com sucesso.' })
-      setEditingRes(null)
-      fetchData()
-    } catch (err: any) {
-      toast({
-        title: 'Erro',
-        description: err.message || 'Falha ao atualizar reserva.',
-        variant: 'destructive',
-      })
+      toast({ title: 'Reserva atualizada com sucesso' })
+      setIsDialogOpen(false)
+      fetchReservations()
+    } catch (error: any) {
+      toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' })
     } finally {
       setIsSaving(false)
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto p-6 max-w-7xl animate-fade-in-up">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Reservas</h1>
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Lista de Reservas</h1>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <ReservationsTable
-          reservations={reservations}
-          rooms={rooms}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          isMaster={true}
-        />
-      )}
+      <ReservationsTable
+        reservations={reservations}
+        rooms={rooms}
+        onDelete={handleDelete}
+        onEdit={handleEditClick}
+        isMaster={isMaster}
+      />
 
-      <Dialog open={!!editingRes} onOpenChange={(open) => !open && setEditingRes(null)}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Editar Reserva</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">
-                Data
-              </Label>
-              <Input
-                id="date"
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="col-span-3"
-              />
+            <div className="grid gap-2">
+              <Label>Sala</Label>
+              <Select value={editRoomId} onValueChange={setEditRoomId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a sala" />
+                </SelectTrigger>
+                <SelectContent>
+                  {rooms.map((room) => (
+                    <SelectItem key={room.id} value={room.id}>
+                      {room.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="time" className="text-right">
-                Horário
-              </Label>
+            <div className="grid gap-2">
+              <Label>Data</Label>
+              <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Horário de Início</Label>
               <Input
-                id="time"
                 type="time"
                 value={editStartTime}
                 onChange={(e) => setEditStartTime(e.target.value)}
-                className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="duration" className="text-right">
-                Duração
-              </Label>
+            <div className="grid gap-2">
+              <Label>Duração</Label>
               <Select value={editDuration} onValueChange={setEditDuration}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecione" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Duração" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="15">15 minutos</SelectItem>
                   <SelectItem value="30">30 minutos</SelectItem>
+                  <SelectItem value="45">45 minutos</SelectItem>
                   <SelectItem value="60">1 hora</SelectItem>
-                  <SelectItem value="90">1h 30m</SelectItem>
+                  <SelectItem value="90">1 hora e 30 minutos</SelectItem>
                   <SelectItem value="120">2 horas</SelectItem>
                   <SelectItem value="180">3 horas</SelectItem>
                   <SelectItem value="240">4 horas</SelectItem>
@@ -266,38 +264,38 @@ export default function Reservations() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-4 items-start gap-4 mt-2">
-              <Label className="text-right pt-2">Extras</Label>
-              <div className="col-span-3 flex flex-col gap-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-pao"
-                    checked={editPao}
-                    onCheckedChange={(c) => setEditPao(!!c)}
-                  />
-                  <Label htmlFor="edit-pao" className="font-normal cursor-pointer">
-                    Pão de Queijo
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="edit-cookie"
-                    checked={editCookie}
-                    onCheckedChange={(c) => setEditCookie(!!c)}
-                  />
-                  <Label htmlFor="edit-cookie" className="font-normal cursor-pointer">
-                    Cookie
-                  </Label>
-                </div>
+            <div className="flex flex-col gap-3 mt-2 border p-3 rounded-md">
+              <Label className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">
+                Extras
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-pao"
+                  checked={editPaoDeQueijo}
+                  onCheckedChange={(checked) => setEditPaoDeQueijo(checked === true)}
+                />
+                <Label htmlFor="edit-pao" className="font-normal cursor-pointer">
+                  Pão de Queijo
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-cookie"
+                  checked={editCookie}
+                  onCheckedChange={(checked) => setEditCookie(checked === true)}
+                />
+                <Label htmlFor="edit-cookie" className="font-normal cursor-pointer">
+                  Cookie
+                </Label>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingRes(null)}>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button onClick={saveEdit} disabled={isSaving}>
-              {isSaving ? 'Salvando...' : 'Salvar'}
+            <Button onClick={handleUpdate} disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </DialogFooter>
         </DialogContent>
