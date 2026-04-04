@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Trash2, Edit2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Trash2, Edit2, ArrowUpDown, ArrowUp, ArrowDown, Check } from 'lucide-react'
 
 import {
   Table,
@@ -140,6 +140,7 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                 Status <SortIcon columnKey="status" />
               </div>
             </TableHead>
+            <TableHead>Extras</TableHead>
             {isMaster && <TableHead className="text-right">Ações</TableHead>}
           </TableRow>
         </TableHeader>
@@ -194,6 +195,23 @@ export function ReservationsTable({ reservations, rooms, onDelete, onEdit, isMas
                         ? 'Reprovada'
                         : 'Pendente'}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-sm">
+                  <div className="flex flex-col gap-1">
+                    {(res as any).pao_de_queijo ? (
+                      <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
+                        <Check className="h-3.5 w-3.5 text-green-600" /> Pão de Queijo
+                      </span>
+                    ) : null}
+                    {(res as any).cookie ? (
+                      <span className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
+                        <Check className="h-3.5 w-3.5 text-green-600" /> Cookie
+                      </span>
+                    ) : null}
+                    {!(res as any).pao_de_queijo && !(res as any).cookie && (
+                      <span className="text-muted-foreground/50">-</span>
+                    )}
+                  </div>
                 </TableCell>
                 {isMaster && (
                   <TableCell className="text-right">
