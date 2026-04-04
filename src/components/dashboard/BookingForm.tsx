@@ -108,9 +108,20 @@ export function BookingForm({ selectedDate, selectedRoomId }: BookingFormProps) 
       })
       form.reset({ ...data, startTime: '' })
     } else {
+      console.error('Erro detalhado da reserva:', resResult)
+
+      let errorMessage =
+        'Não foi possível realizar a reserva. Verifique o console para mais detalhes.'
+      if (resResult.error) {
+        errorMessage =
+          typeof resResult.error === 'string'
+            ? resResult.error
+            : resResult.error.message || JSON.stringify(resResult.error)
+      }
+
       toast({
-        title: 'Horário indisponível',
-        description: 'Reserva não realizada',
+        title: 'Falha na reserva',
+        description: errorMessage,
         variant: 'destructive',
       })
     }
